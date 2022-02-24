@@ -131,6 +131,7 @@ pub fn is_rust_keyword(word: &str) -> bool {
 }
 
 #[cfg(test)]
+#[allow(clippy::type_complexity)]
 const SNAPSHOT_CASES: &[(&str, fn() -> TestSpecs<'static>)] =
   &[("empty", TestSpecs::empty), ("json", TestSpecs::json)];
 
