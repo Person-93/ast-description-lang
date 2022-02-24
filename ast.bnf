@@ -1,0 +1,18 @@
+entry ::= <node_type> <whitespace> "=" <whitespace> <tagged_node_def>
+node_type ::= <identifier>
+tagged_node_def ::= <node_def> | <node_def> ":" <identifier>
+node_def ::= <identifier> |
+             "!todo" |
+             <identifier><modifier> |
+             (<node_def>) |
+             "delim[" <identifier> "]<" <node_def> ">" |
+             <tagged_node_def> <whitespace> <tagged_node_def> |
+             <tagged_node_def> <whitespace> "|" <whitespace> <tagged_node_def>
+identifier ::= <word> | <identifier> "_" <word>
+word ::= <letter> | <word> <letter>
+letter ::= "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" |
+           "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" |
+           "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" |
+           "y" | "z" | "_"
+modifier ::= "*" | ",*" | "+" | ",+" | "?" | "~"
+whitespace ::= " " | <whitespace><whitespace>
