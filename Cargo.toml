@@ -14,3 +14,6 @@ proc-macro2 = "1.0.36"
 quote = "1.0.15"
 serde = { version = "1.0.136", features = ["derive"] }
 thiserror = "1.0.30"
+
+[dev-dependencies]
+insta = "1.12.0"
