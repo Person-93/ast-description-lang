@@ -5,6 +5,7 @@ version = "0.1.0-dev"
 edition = "2021"
 description = "A language to describe your language's AST"
 license = "MIT OR Apache-2.0"
+repository = "https://github.com/Person-93/ast-description-lang"
 
 [dependencies]
 anyhow = "1.0.54"
