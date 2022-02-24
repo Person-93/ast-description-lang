@@ -294,7 +294,7 @@ impl Iterator for LineRanges<'_> {
 
   fn next(&mut self) -> Option<Self::Item> {
     (self.text.len() > self.index).then(|| {
-      match self.text[self.index..self.text.len()].find('\n') {
+      let range = match self.text[self.index..self.text.len()].find('\n') {
         Some(i) => {
           let r = self.index..self.index + i;
           self.index += i + 1;
@@ -305,6 +305,11 @@ impl Iterator for LineRanges<'_> {
           self.index = self.text.len();
           r
         }
+      };
+      if self.text[range.clone()].ends_with('\r') {
+        range.start..range.end - 1
+      } else {
+        range
       }
     })
   }
