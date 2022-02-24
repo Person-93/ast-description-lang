@@ -129,3 +129,28 @@ pub fn is_rust_keyword(word: &str) -> bool {
 
   KEYWORDS.contains(&word)
 }
+
+#[cfg(test)]
+const SNAPSHOT_CASES: &[(&str, fn() -> TestSpecs<'static>)] = &[];
+
+#[cfg(test)]
+struct TestSpecs<'s> {
+  delimiters: NamedSet<'s, Delimiter<'s>>,
+  static_tokens: IndexMap<Ident<'s>, &'s str>,
+  dynamic_tokens: IndexMap<Ident<'s>, &'s str>,
+}
+
+#[cfg(test)]
+impl<'s> crate::Specs<'s> for TestSpecs<'s> {
+  fn delimiters(&self) -> &NamedSet<'s, Delimiter<'s>> {
+    &self.delimiters
+  }
+
+  fn static_tokens(&self) -> &IndexMap<Ident<'s>, &'s str> {
+    &self.static_tokens
+  }
+
+  fn dynamic_tokens(&self) -> &IndexMap<Ident<'s>, &'s str> {
+    &self.dynamic_tokens
+  }
+}

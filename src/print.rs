@@ -823,3 +823,57 @@ fn print_todo() -> TokenStream {
 fn ident_from_idx(idx: usize) -> proc_macro2::Ident {
   format_ident!("_{idx}")
 }
+
+#[cfg(test)]
+#[test]
+fn snapshots() {
+  use crate::raw::Ast;
+  use insta::{assert_snapshot, with_settings};
+  use std::{
+    fs,
+    io::Write,
+    path::Path,
+    process::{Command, Stdio},
+  };
+
+  for (name, specs) in super::SNAPSHOT_CASES {
+    let mut path = Path::new(env!("CARGO_MANIFEST_DIR"))
+      .join("examples")
+      .join(name);
+    path.set_extension("ast");
+    let text = fs::read_to_string(&path).unwrap();
+    let specs = specs();
+    let printed = Ast::parse(&text)
+      .unwrap()
+      .transform(&specs)
+      .unwrap()
+      .transform()
+      .unwrap()
+      .print(&specs)
+      .to_string();
+    let rustfmt = Command::new("rustfmt")
+      .stdin(Stdio::piped())
+      .stdout(Stdio::piped())
+      .spawn()
+      .expect("starting rustfmt process");
+    rustfmt
+      .stdin
+      .as_ref()
+      .unwrap()
+      .write_all(printed.as_bytes())
+      .unwrap();
+    let output = rustfmt
+      .wait_with_output()
+      .expect("collect output from rustfmt");
+    let status = output.status;
+    if !status.success() {
+      let message = std::str::from_utf8(&output.stderr).unwrap();
+      panic!("rustfmt failed: {status}\n{message}");
+    }
+    let printed = std::str::from_utf8(&output.stdout).unwrap();
+
+    with_settings!({input_file => Some(path)}, {
+      assert_snapshot!(printed);
+    });
+  }
+}

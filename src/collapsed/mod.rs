@@ -186,3 +186,22 @@ impl Display for NodeKind<'_> {
     }
   }
 }
+
+#[cfg(test)]
+#[test]
+fn snapshots() {
+  use crate::raw::Ast;
+  use insta::{assert_debug_snapshot, with_settings};
+  use std::{fs, path::Path};
+
+  for (name, specs) in super::SNAPSHOT_CASES {
+    let mut path = Path::new(env!("CARGO_MANIFEST_DIR"))
+      .join("examples")
+      .join(name);
+    path.set_extension("ast");
+    let text = fs::read_to_string(&path).unwrap();
+    with_settings!({input_file => Some(path)}, {
+      assert_debug_snapshot!(Ast::parse(&text).unwrap().transform(&specs()).unwrap().transform());
+    });
+  }
+}
