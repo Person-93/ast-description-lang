@@ -48,6 +48,7 @@ jobs:
         profile: minimal
         toolchain: ${{ matrix.rust }}
         override: true
+        components: rustfmt
 
     - uses: Swatinem/rust-cache@v1.3.0
 
