@@ -131,7 +131,8 @@ pub fn is_rust_keyword(word: &str) -> bool {
 }
 
 #[cfg(test)]
-const SNAPSHOT_CASES: &[(&str, fn() -> TestSpecs<'static>)] = &[];
+const SNAPSHOT_CASES: &[(&str, fn() -> TestSpecs<'static>)] =
+  &[("empty", TestSpecs::empty), ("json", TestSpecs::json)];
 
 #[cfg(test)]
 struct TestSpecs<'s> {
@@ -152,5 +153,51 @@ impl<'s> crate::Specs<'s> for TestSpecs<'s> {
 
   fn dynamic_tokens(&self) -> &IndexMap<Ident<'s>, &'s str> {
     &self.dynamic_tokens
+  }
+}
+
+#[cfg(test)]
+impl TestSpecs<'_> {
+  fn empty() -> TestSpecs<'static> {
+    TestSpecs {
+      delimiters: Default::default(),
+      static_tokens: Default::default(),
+      dynamic_tokens: Default::default(),
+    }
+  }
+
+  fn json() -> TestSpecs<'static> {
+    use indexmap::indexmap;
+
+    TestSpecs {
+      delimiters: vec![
+        Delimiter {
+          name: Ident("brace"),
+          open: "left_brace",
+          close: "right_brace",
+        },
+        Delimiter {
+          name: Ident("bracket"),
+          open: "left_bracket",
+          close: "right_bracket",
+        },
+      ]
+      .into_iter()
+      .collect(),
+      static_tokens: indexmap! {
+        Ident("left_brace") => "{",
+        Ident("right_brace") => "}",
+        Ident("left_bracket") => "[",
+        Ident("right_bracket") => "]",
+        Ident("colon") => ":",
+        Ident("kw_true") => "true",
+        Ident("kw_false") => "false",
+      },
+      dynamic_tokens: indexmap! {
+        Ident("ident") => "[[:alpha:]_][[:alnum:]_]*",
+        Ident("num_lit") => r"\d+(\.\d+)?",
+        Ident("str_lit") => r#""([^"]|(\\"))*""#,
+      },
+    }
   }
 }

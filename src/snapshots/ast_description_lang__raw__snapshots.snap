@@ -1,0 +1,14 @@
+---
+source: src/raw.rs
+assertion_line: 441
+expression: "Ast::parse(&text)"
+input_file: examples/empty.ast
+
+---
+Ok(
+    Ast(
+        NamedSet(
+            {},
+        ),
+    ),
+)

@@ -1,0 +1,15 @@
+---
+source: src/print.rs
+assertion_line: 876
+expression: printed
+input_file: examples/empty.ast
+
+---
+#![allow(dead_code)]
+use super::super::tokens;
+pub mod parse {
+  use super::{super::Error, *};
+  use chumsky::prelude::*;
+  use tokens::{parse::*, Token};
+  thread_local! { static RECURSIVE : std :: cell :: RefCell < () > = std :: cell :: RefCell :: new ({ () }) ; }
+}
