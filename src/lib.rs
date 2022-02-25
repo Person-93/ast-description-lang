@@ -37,7 +37,7 @@ impl Default for Config<'_> {
 pub struct Specs<'s> {
   pub static_tokens: IndexMap<Ident<'s>, &'s str>,
   pub dynamic_tokens: IndexMap<Ident<'s>, &'s str>,
-  pub delimiters: NamedSet<'s, Delimiter<'s>>,
+  pub delimiters: IndexMap<Ident<'s>, Delimiter<'s>>,
 }
 
 pub fn generate(text: &str, specs: &Specs<'_>, config: Config<'_>) -> Result<TokenStream> {
@@ -72,9 +72,8 @@ pub enum Modifier {
   Boxed,
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Deserialize)]
 pub struct Delimiter<'d> {
-  name: Ident<'d>,
   open: &'d str,
   close: &'d str,
 }
@@ -109,41 +108,6 @@ impl Display for Modifier {
       Modifier::CsvOnePlus => write!(f, ",+"),
       Modifier::Optional => write!(f, "?"),
       Modifier::Boxed => write!(f, "~"),
-    }
-  }
-}
-
-impl<'d> self::collections::NamedItem<'d> for Delimiter<'d> {
-  type Name = Ident<'d>;
-  type Unnamed = UnnamedDelimiter<'d>;
-
-  fn name(&self) -> Self::Name {
-    self.name
-  }
-
-  fn dummy(name: Self::Name) -> Self {
-    Self {
-      name,
-      open: "",
-      close: "",
-    }
-  }
-}
-
-#[derive(Deserialize)]
-pub struct UnnamedDelimiter<'d> {
-  open: &'d str,
-  close: &'d str,
-}
-
-impl<'d> Unnamed<'d> for UnnamedDelimiter<'d> {
-  type Named = Delimiter<'d>;
-
-  fn add_name(self, name: <Self::Named as NamedItem<'d>>::Name) -> Self::Named {
-    Delimiter {
-      name,
-      open: self.open,
-      close: self.close,
     }
   }
 }
@@ -184,20 +148,10 @@ impl Specs<'_> {
     use indexmap::indexmap;
 
     Specs {
-      delimiters: vec![
-        Delimiter {
-          name: Ident("brace"),
-          open: "left_brace",
-          close: "right_brace",
-        },
-        Delimiter {
-          name: Ident("bracket"),
-          open: "left_bracket",
-          close: "right_bracket",
-        },
-      ]
-      .into_iter()
-      .collect(),
+      delimiters: indexmap! {
+        Ident("brace") => Delimiter{open: "left_brace", close: "right_brace"},
+        Ident("bracket") => Delimiter{open: "left_bracket", close: "right_bracket"},
+      },
       static_tokens: indexmap! {
         Ident("left_brace") => "{",
         Ident("right_brace") => "}",

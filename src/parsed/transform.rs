@@ -112,7 +112,7 @@ impl<'v, 'ast: 'v, 's: 'ast> Validator<'v, 'ast, 's> {
             ValidNodeKind::Modified(Box::new(self.validate_node_def(inner)?), *modifier)
           }
           NodeKindDef::Delimiter(inner, delimiter) => {
-            if self.specs.delimiters.contains(*delimiter) {
+            if self.specs.delimiters.contains_key(delimiter) {
               ValidNodeKind::Delimited(Box::new(self.validate_node_def(inner)?), *delimiter)
             } else {
               return Err(Error::UnknownDelim(String::from(delimiter.0)));

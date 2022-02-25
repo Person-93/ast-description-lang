@@ -559,7 +559,7 @@ impl Ast<'_> {
     delimiter: Ident<'_>,
     specs: &Specs<'_>,
   ) -> TokenStream {
-    match specs.delimiters.get(delimiter) {
+    match specs.delimiters.get(&delimiter) {
       Some(delimiter) => {
         let open = format_ident!("{}", delimiter.open);
         let close = format_ident!("{}", delimiter.close);
