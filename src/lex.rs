@@ -35,7 +35,7 @@ impl<'l> Lexer<'l> {
   }
 
   pub fn skip_whitespace(&self) {
-    self.bump_while(|c| c == ' ' || c == '\\' || c == '\n');
+    self.bump_while(|c| " \\\n\r\t".contains(c));
     self.start.set(self.index.get());
   }
 
