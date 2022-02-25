@@ -1,7 +1,7 @@
 [package]
 name = "ast-description-lang"
 authors = ["person93 <person93.person93@gmail.com>"]
-version = "0.2.1"
+version = "0.2.2-dev"
 edition = "2021"
 description = "A language to describe your language's AST"
 license = "MIT OR Apache-2.0"
