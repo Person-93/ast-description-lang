@@ -1,0 +1,17 @@
+[static_tokens]
+left_brace = "{"
+right_brace = "}"
+left_bracket = "["
+right_bracket = "]"
+colon = ":"
+kw_true = "true"
+kw_false = "false"
+
+[dynamic_tokens]
+ident = "[[:alpha:]_][[:alnum:]_]*"
+num_lit = '''\d+(\.\d+)'''
+str_lit = '''"([^"]|(\\"))*"'''
+
+[delimiters]
+brace = { open = "left_brace", close = "right_brace" }
+bracket = { open = "left_bracket", close = "right_bracket" }
