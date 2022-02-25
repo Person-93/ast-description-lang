@@ -10,7 +10,7 @@ use std::{cell::RefCell, collections::hash_map::HashMap, marker::PhantomData};
 use thiserror::Error;
 
 impl<'a> RawAst<'a> {
-  pub fn transform<'s: 'a, S: Specs<'s>>(&'a self, specs: &'a S) -> Result<Ast<'a>, Error> {
+  pub fn transform(&'a self, specs: &'a Specs<'a>) -> Result<Ast<'a>, Error> {
     let validator = Validator::new(self, specs);
     Ok(Ast(
       self
@@ -64,15 +64,15 @@ fn node_from_def(node_def_kind: ValidNodeKind) -> NodeKind {
   }
 }
 
-struct Validator<'v, 'ast: 'v, 's: 'ast, S: Specs<'s>> {
+struct Validator<'v, 'ast: 'v, 's: 'ast> {
   ast: &'v RawAst<'ast>,
-  specs: &'v S,
+  specs: &'v Specs<'s>,
   cache: RefCell<HashMap<&'v NodeKindDef<'ast>, ValidNodeKind<'ast>>>,
   _marker: PhantomData<&'s ()>,
 }
 
-impl<'v, 'ast: 'v, 's: 'ast, S: Specs<'s>> Validator<'v, 'ast, 's, S> {
-  fn new(ast: &'v RawAst<'ast>, specs: &'v S) -> Validator<'v, 'ast, 's, S> {
+impl<'v, 'ast: 'v, 's: 'ast> Validator<'v, 'ast, 's> {
+  fn new(ast: &'v RawAst<'ast>, specs: &'v Specs<'s>) -> Validator<'v, 'ast, 's> {
     Validator {
       ast,
       specs,
@@ -94,18 +94,14 @@ impl<'v, 'ast: 'v, 's: 'ast, S: Specs<'s>> Validator<'v, 'ast, 's, S> {
             let ident = *ident;
             if self.ast.get(ident).is_some() {
               ValidNodeKind::Node(ident)
-            } else if self
-              .specs
-              .static_tokens()
-              .into_iter()
-              .any(|t| *t.0 == ident)
-            {
+            } else if self.specs.static_tokens.keys().copied().any(|t| t == ident) {
               ValidNodeKind::StaticToken(ident)
             } else if self
               .specs
-              .dynamic_tokens()
-              .into_iter()
-              .any(|t| *t.0 == ident)
+              .dynamic_tokens
+              .keys()
+              .copied()
+              .any(|t| t == ident)
             {
               ValidNodeKind::DynamicToken(ident)
             } else {
@@ -116,7 +112,7 @@ impl<'v, 'ast: 'v, 's: 'ast, S: Specs<'s>> Validator<'v, 'ast, 's, S> {
             ValidNodeKind::Modified(Box::new(self.validate_node_def(inner)?), *modifier)
           }
           NodeKindDef::Delimiter(inner, delimiter) => {
-            if self.specs.delimiters().contains(*delimiter) {
+            if self.specs.delimiters.contains(*delimiter) {
               ValidNodeKind::Delimited(Box::new(self.validate_node_def(inner)?), *delimiter)
             } else {
               return Err(Error::UnknownDelim(String::from(delimiter.0)));

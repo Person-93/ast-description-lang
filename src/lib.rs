@@ -8,6 +8,7 @@ use std::{
   fmt::{self, Display, Formatter},
   str::FromStr,
 };
+use thiserror::Error;
 
 mod collapsed;
 mod collections;
@@ -31,17 +32,15 @@ impl Default for Config<'_> {
   }
 }
 
-pub trait Specs<'s> {
-  fn delimiters(&self) -> &NamedSet<'s, Delimiter<'s>>;
-  fn static_tokens(&self) -> &IndexMap<Ident<'s>, &'s str>;
-  fn dynamic_tokens(&self) -> &IndexMap<Ident<'s>, &'s str>;
+#[derive(Clone, Debug, Deserialize)]
+#[serde(bound(deserialize = "'de: 's"))]
+pub struct Specs<'s> {
+  pub static_tokens: IndexMap<Ident<'s>, &'s str>,
+  pub dynamic_tokens: IndexMap<Ident<'s>, &'s str>,
+  pub delimiters: NamedSet<'s, Delimiter<'s>>,
 }
 
-pub fn generate<'s, S: Specs<'s>>(
-  text: &'s str,
-  specs: &'s S,
-  config: Config<'s>,
-) -> Result<TokenStream> {
+pub fn generate(text: &str, specs: &Specs<'_>, config: Config<'_>) -> Result<TokenStream> {
   let error = TokenStream::from_str(config.error)
     .map_err(|err| anyhow!("{err}"))
     .context("failed to lex the error type")?;
@@ -80,7 +79,15 @@ pub struct Delimiter<'d> {
   close: &'d str,
 }
 
-impl Ident<'_> {
+impl<'i> Ident<'i> {
+  pub fn new(ident: &'i str) -> Result<Self, InvalidIdent> {
+    if ident.chars().all(|c| raw::IDENT_CHARS.contains(c)) {
+      Ok(Ident(ident))
+    } else {
+      Err(InvalidIdent(String::from(ident)))
+    }
+  }
+
   pub fn as_type(&self) -> proc_macro2::Ident {
     quote::format_ident!("{}", self.0.to_pascal_case())
   }
@@ -160,45 +167,23 @@ pub fn is_rust_keyword(word: &str) -> bool {
 
 #[cfg(test)]
 #[allow(clippy::type_complexity)]
-const SNAPSHOT_CASES: &[(&str, fn() -> TestSpecs<'static>)] =
-  &[("empty", TestSpecs::empty), ("json", TestSpecs::json)];
+const SNAPSHOT_CASES: &[(&str, fn() -> Specs<'static>)] =
+  &[("empty", Specs::empty), ("json", Specs::json)];
 
 #[cfg(test)]
-struct TestSpecs<'s> {
-  delimiters: NamedSet<'s, Delimiter<'s>>,
-  static_tokens: IndexMap<Ident<'s>, &'s str>,
-  dynamic_tokens: IndexMap<Ident<'s>, &'s str>,
-}
-
-#[cfg(test)]
-impl<'s> crate::Specs<'s> for TestSpecs<'s> {
-  fn delimiters(&self) -> &NamedSet<'s, Delimiter<'s>> {
-    &self.delimiters
-  }
-
-  fn static_tokens(&self) -> &IndexMap<Ident<'s>, &'s str> {
-    &self.static_tokens
-  }
-
-  fn dynamic_tokens(&self) -> &IndexMap<Ident<'s>, &'s str> {
-    &self.dynamic_tokens
-  }
-}
-
-#[cfg(test)]
-impl TestSpecs<'_> {
-  fn empty() -> TestSpecs<'static> {
-    TestSpecs {
+impl Specs<'_> {
+  fn empty() -> Specs<'static> {
+    Specs {
       delimiters: Default::default(),
       static_tokens: Default::default(),
       dynamic_tokens: Default::default(),
     }
   }
 
-  fn json() -> TestSpecs<'static> {
+  fn json() -> Specs<'static> {
     use indexmap::indexmap;
 
-    TestSpecs {
+    Specs {
       delimiters: vec![
         Delimiter {
           name: Ident("brace"),
@@ -230,3 +215,7 @@ impl TestSpecs<'_> {
     }
   }
 }
+
+#[derive(Clone, Debug, Error)]
+#[error("invalid ident: {0}")]
+pub struct InvalidIdent(String);

@@ -276,7 +276,7 @@ impl Ident<'_> {
 }
 
 const IDENT_TERMINALS: &str = " ,+*?)]>~:";
-const IDENT_CHARS: &str = "abcdefghijklmnopqurstuvwxyz_";
+pub(crate) const IDENT_CHARS: &str = "abcdefghijklmnopqurstuvwxyz_";
 
 struct LineRanges<'a> {
   text: &'a str,

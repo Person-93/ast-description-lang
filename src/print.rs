@@ -8,9 +8,9 @@ use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
 
 impl Ast<'_> {
-  pub fn print<'s, S: Specs<'s>>(
+  pub fn print(
     &self,
-    specs: &S,
+    specs: &Specs<'_>,
     error: TokenStream,
     tokens_mod: TokenStream,
   ) -> TokenStream {
@@ -284,7 +284,7 @@ impl Ast<'_> {
     }
   }
 
-  fn print_parser<'s, S: Specs<'s>>(&self, node: &Node<'_>, specs: &S) -> TokenStream {
+  fn print_parser(&self, node: &Node<'_>, specs: &Specs<'_>) -> TokenStream {
     let ident = node.ident;
     let ty: TokenStream =
       match &node.kind {
@@ -338,11 +338,11 @@ impl Ast<'_> {
     }
   }
 
-  fn print_parser_body<'s, S: Specs<'s>>(
+  fn print_parser_body(
     &self,
     node_kind: &NodeKind<'_>,
     hint: Option<Ident<'_>>,
-    specs: &S,
+    specs: &Specs<'_>,
   ) -> TokenStream {
     match node_kind {
       NodeKind::Node(child) => quote! { #child() },
@@ -508,12 +508,7 @@ impl Ast<'_> {
     }
   }
 
-  fn print_sub_parser<'s, S: Specs<'s>>(
-    &self,
-    node: &Node<'_>,
-    specs: &S,
-    inline: bool,
-  ) -> TokenStream {
+  fn print_sub_parser(&self, node: &Node<'_>, specs: &Specs<'_>, inline: bool) -> TokenStream {
     if inline {
       self.print_parser_body(&node.kind, None, specs)
     } else {
@@ -558,13 +553,13 @@ impl Ast<'_> {
     }
   }
 
-  fn delimit_parser<'s, S: Specs<'s>>(
+  fn delimit_parser(
     &self,
     parser: TokenStream,
     delimiter: Ident<'_>,
-    specs: &S,
+    specs: &Specs<'_>,
   ) -> TokenStream {
-    match specs.delimiters().get(delimiter) {
+    match specs.delimiters.get(delimiter) {
       Some(delimiter) => {
         let open = format_ident!("{}", delimiter.open);
         let close = format_ident!("{}", delimiter.close);
@@ -577,7 +572,7 @@ impl Ast<'_> {
     }
   }
 
-  fn print_recursive_parsers<'s, S: Specs<'s>>(&self, specs: &S) -> TokenStream {
+  fn print_recursive_parsers(&self, specs: &Specs<'_>) -> TokenStream {
     let nodes: Vec<_> = self
       .nodes
       .iter()
@@ -623,11 +618,11 @@ impl Ast<'_> {
     }
   }
 
-  fn print_recursive_sub_parser<'s, S: Specs<'s>>(
+  fn print_recursive_sub_parser(
     &self,
     node_kind: &NodeKind<'_>,
     hint: Option<Ident<'_>>,
-    specs: &S,
+    specs: &Specs<'_>,
   ) -> TokenStream {
     match node_kind {
       NodeKind::Node(child) => {
