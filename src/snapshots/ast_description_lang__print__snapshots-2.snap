@@ -1,12 +1,13 @@
 ---
 source: src/print.rs
-assertion_line: 889
+assertion_line: 898
 expression: printed
 input_file: examples/json.ast
 
 ---
 #![allow(dead_code)]
 use crate::tokens;
+#[derive(Clone, Debug)]
 pub enum Json {
   Object(Vec<Member>),
   Array(Vec<Json>),
@@ -14,14 +15,17 @@ pub enum Json {
   StrLit(tokens::StrLit),
   Bool(Bool),
 }
+#[derive(Clone, Debug)]
 pub struct Member {
   pub key: Key,
   pub json: Json,
 }
+#[derive(Clone, Debug)]
 pub enum Key {
   StrLit(tokens::StrLit),
   Ident(tokens::Ident),
 }
+#[derive(Clone, Debug)]
 pub enum Bool {
   KwTrue,
   KwFalse,

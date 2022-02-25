@@ -41,7 +41,10 @@ impl Ast<'_> {
             });
 
           let ident = node.ident.as_type();
-          Some(quote! { pub struct #ident { #(#members),* } })
+          Some(quote! {
+            #[derive(Clone, Debug)]
+            pub struct #ident { #(#members),* }
+          })
         }
       },
       NodeKind::Choice(Choice {
@@ -101,7 +104,10 @@ impl Ast<'_> {
         });
 
         let ident = format_ident!("{}", node.ident.0.to_pascal_case());
-        Some(quote! { pub enum #ident { #(#variants),* } })
+        Some(quote! {
+          #[derive(Clone, Debug)]
+          pub enum #ident { #(#variants),* }
+        })
       }
       NodeKind::Delimited(inner, _delimiter) => match &**inner {
         NodeKind::Node(_) | NodeKind::StaticToken(_) | NodeKind::DynamicToken(_) => None,
@@ -124,7 +130,10 @@ impl Ast<'_> {
               });
 
             let ident = node.ident.as_type();
-            Some(quote! { pub struct #ident { #(#members),* } })
+            Some(quote! {
+              #[derive(Clone, Debug)]
+              pub struct #ident { #(#members),* }
+            })
           }
         },
         NodeKind::Choice(_)
