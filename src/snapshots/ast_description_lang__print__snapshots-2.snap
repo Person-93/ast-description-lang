@@ -1,12 +1,12 @@
 ---
 source: src/print.rs
-assertion_line: 876
+assertion_line: 889
 expression: printed
 input_file: examples/json.ast
 
 ---
 #![allow(dead_code)]
-use super::super::tokens;
+use crate::tokens;
 pub enum Json {
   Object(Vec<Member>),
   Array(Vec<Json>),
@@ -27,9 +27,10 @@ pub enum Bool {
   KwFalse,
 }
 pub mod parse {
-  use super::{super::Error, *};
+  use super::*;
   use chumsky::prelude::*;
   use tokens::{parse::*, Token};
+  type Error = ::chumsky::error::Simple<tokens::Token>;
   pub fn json() -> impl Parser<Token, Json, Error = Error> {
     RECURSIVE.with(|parsers| parsers.borrow().0.clone())
   }

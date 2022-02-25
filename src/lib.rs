@@ -1,10 +1,13 @@
 pub use self::collections::{NamedItem, NamedSet, Unnamed};
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use heck::ToPascalCase;
 use indexmap::IndexMap;
 use proc_macro2::TokenStream;
 use serde::Deserialize;
-use std::fmt::{self, Display, Formatter};
+use std::{
+  fmt::{self, Display, Formatter},
+  str::FromStr,
+};
 
 mod collapsed;
 mod collections;
@@ -13,13 +16,38 @@ mod parsed;
 mod print;
 mod raw;
 
+#[non_exhaustive]
+pub struct Config<'c> {
+  pub error: &'c str,
+  pub tokens_mod: &'c str,
+}
+
+impl Default for Config<'_> {
+  fn default() -> Self {
+    Self {
+      error: "::chumsky::error::Simple<tokens::Token>",
+      tokens_mod: "crate::tokens",
+    }
+  }
+}
+
 pub trait Specs<'s> {
   fn delimiters(&self) -> &NamedSet<'s, Delimiter<'s>>;
   fn static_tokens(&self) -> &IndexMap<Ident<'s>, &'s str>;
   fn dynamic_tokens(&self) -> &IndexMap<Ident<'s>, &'s str>;
 }
 
-pub fn generate<'s, S: Specs<'s>>(text: &'s str, specs: &'s S) -> Result<TokenStream> {
+pub fn generate<'s, S: Specs<'s>>(
+  text: &'s str,
+  specs: &'s S,
+  config: Config<'s>,
+) -> Result<TokenStream> {
+  let error = TokenStream::from_str(config.error)
+    .map_err(|err| anyhow!("{err}"))
+    .context("failed to lex the error type")?;
+  let tokens_mod = TokenStream::from_str(config.tokens_mod)
+    .map_err(|err| anyhow!("{err}"))
+    .context("failed to lex the tokens mod path")?;
   let ast = raw::Ast::parse(text).context("failed to lex AST description")?;
   let ast = ast
     .transform(specs)
@@ -27,7 +55,7 @@ pub fn generate<'s, S: Specs<'s>>(text: &'s str, specs: &'s S) -> Result<TokenSt
   let ast = ast
     .transform()
     .context("failed to collapse AST description")?;
-  let ast = ast.print(specs);
+  let ast = ast.print(specs, error, tokens_mod);
   Ok(ast)
 }
 

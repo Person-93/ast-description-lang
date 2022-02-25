@@ -8,7 +8,12 @@ use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
 
 impl Ast<'_> {
-  pub fn print<'s, S: Specs<'s>>(&self, specs: &S) -> TokenStream {
+  pub fn print<'s, S: Specs<'s>>(
+    &self,
+    specs: &S,
+    error: TokenStream,
+    tokens_mod: TokenStream,
+  ) -> TokenStream {
     let nodes = self.iter().filter_map(|node| match &node.kind {
       NodeKind::Node(_)
       | NodeKind::StaticToken(_)
@@ -138,13 +143,15 @@ impl Ast<'_> {
     quote! {
       #![allow(dead_code)]
 
-      use super::super::tokens;
+      use #tokens_mod;
       #(#nodes)*
 
       pub mod parse {
-        use super::{*, super::Error};
+        use super::*;
         use chumsky::prelude::*;
         use tokens::{parse::*, Token};
+
+        type Error = #error;
 
         #(#parsers)*
         #recursive_parsers
@@ -827,13 +834,14 @@ fn ident_from_idx(idx: usize) -> proc_macro2::Ident {
 #[cfg(test)]
 #[test]
 fn snapshots() {
-  use crate::raw::Ast;
+  use crate::{raw::Ast, Config};
   use insta::{assert_snapshot, with_settings};
   use std::{
     fs,
     io::Write,
     path::Path,
     process::{Command, Stdio},
+    str::FromStr,
   };
 
   for (name, specs) in super::SNAPSHOT_CASES {
@@ -843,13 +851,18 @@ fn snapshots() {
     path.set_extension("ast");
     let text = fs::read_to_string(&path).unwrap();
     let specs = specs();
+    let config = Config::default();
     let printed = Ast::parse(&text)
       .unwrap()
       .transform(&specs)
       .unwrap()
       .transform()
       .unwrap()
-      .print(&specs)
+      .print(
+        &specs,
+        TokenStream::from_str(config.error).unwrap(),
+        TokenStream::from_str(config.tokens_mod).unwrap(),
+      )
       .to_string();
     let rustfmt = Command::new("rustfmt")
       .stdin(Stdio::piped())

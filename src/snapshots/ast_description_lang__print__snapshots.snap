@@ -1,15 +1,16 @@
 ---
 source: src/print.rs
-assertion_line: 876
+assertion_line: 889
 expression: printed
 input_file: examples/empty.ast
 
 ---
 #![allow(dead_code)]
-use super::super::tokens;
+use crate::tokens;
 pub mod parse {
-  use super::{super::Error, *};
+  use super::*;
   use chumsky::prelude::*;
   use tokens::{parse::*, Token};
+  type Error = ::chumsky::error::Simple<tokens::Token>;
   thread_local! { static RECURSIVE : std :: cell :: RefCell < () > = std :: cell :: RefCell :: new ({ () }) ; }
 }
