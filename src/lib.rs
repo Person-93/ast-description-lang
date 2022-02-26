@@ -16,6 +16,7 @@ mod lex;
 mod parsed;
 mod print;
 mod raw;
+mod tokens;
 
 #[non_exhaustive]
 pub struct Config<'c> {
