@@ -1,0 +1,26 @@
+[dynamic_tokens]
+ident = "[[a-z]_][[a-z]_]*"
+num_lit = '''\d+(\.\d+)?'''
+
+
+[static_tokens]
+comma = ","
+div = "/"
+equals = "="
+left_brace = "{"
+left_paren = "("
+plus = "+"
+right_brace = "}"
+right_paren = ")"
+minus = "-"
+mult = "*"
+not_equals = "!="
+semi = ";"
+
+kw_fn = "fn"
+kw_if = "if"
+kw_let = "let"
+
+[delimiters]
+brace = { open = "left_brace", close = "right_brace" }
+paren = { open = "left_paren", close = "right_paren" }

@@ -1,0 +1,567 @@
+---
+source: src/ast/raw.rs
+assertion_line: 446
+expression: "Ast::parse(&text)"
+input_file: examples/foo/example.ast
+
+---
+Ok(
+    Ast(
+        NamedSet(
+            {
+                Wrapper(
+                    Entry {
+                        ident: Ident(
+                            "file",
+                        ),
+                        node: NodeDef {
+                            kind: Modified(
+                                NodeDef {
+                                    kind: Simple(
+                                        Ident(
+                                            "function",
+                                        ),
+                                    ),
+                                    tag: None,
+                                },
+                                Repeat,
+                            ),
+                            tag: None,
+                        },
+                    },
+                    PhantomData,
+                ),
+                Wrapper(
+                    Entry {
+                        ident: Ident(
+                            "function",
+                        ),
+                        node: NodeDef {
+                            kind: Group {
+                                nodes: [
+                                    NodeDef {
+                                        kind: Simple(
+                                            Ident(
+                                                "kw_fn",
+                                            ),
+                                        ),
+                                        tag: None,
+                                    },
+                                    NodeDef {
+                                        kind: Simple(
+                                            Ident(
+                                                "ident",
+                                            ),
+                                        ),
+                                        tag: None,
+                                    },
+                                    NodeDef {
+                                        kind: Modified(
+                                            NodeDef {
+                                                kind: Simple(
+                                                    Ident(
+                                                        "ident",
+                                                    ),
+                                                ),
+                                                tag: None,
+                                            },
+                                            Repeat,
+                                        ),
+                                        tag: Some(
+                                            Ident(
+                                                "params",
+                                            ),
+                                        ),
+                                    },
+                                    NodeDef {
+                                        kind: Simple(
+                                            Ident(
+                                                "equals",
+                                            ),
+                                        ),
+                                        tag: None,
+                                    },
+                                    NodeDef {
+                                        kind: Modified(
+                                            NodeDef {
+                                                kind: Simple(
+                                                    Ident(
+                                                        "declaration",
+                                                    ),
+                                                ),
+                                                tag: None,
+                                            },
+                                            Repeat,
+                                        ),
+                                        tag: None,
+                                    },
+                                    NodeDef {
+                                        kind: Simple(
+                                            Ident(
+                                                "expr",
+                                            ),
+                                        ),
+                                        tag: Some(
+                                            Ident(
+                                                "body",
+                                            ),
+                                        ),
+                                    },
+                                    NodeDef {
+                                        kind: Simple(
+                                            Ident(
+                                                "semi",
+                                            ),
+                                        ),
+                                        tag: None,
+                                    },
+                                ],
+                                inline: false,
+                            },
+                            tag: None,
+                        },
+                    },
+                    PhantomData,
+                ),
+                Wrapper(
+                    Entry {
+                        ident: Ident(
+                            "declaration",
+                        ),
+                        node: NodeDef {
+                            kind: Group {
+                                nodes: [
+                                    NodeDef {
+                                        kind: Simple(
+                                            Ident(
+                                                "kw_let",
+                                            ),
+                                        ),
+                                        tag: None,
+                                    },
+                                    NodeDef {
+                                        kind: Simple(
+                                            Ident(
+                                                "ident",
+                                            ),
+                                        ),
+                                        tag: None,
+                                    },
+                                    NodeDef {
+                                        kind: Simple(
+                                            Ident(
+                                                "equals",
+                                            ),
+                                        ),
+                                        tag: None,
+                                    },
+                                    NodeDef {
+                                        kind: Simple(
+                                            Ident(
+                                                "expr",
+                                            ),
+                                        ),
+                                        tag: Some(
+                                            Ident(
+                                                "value",
+                                            ),
+                                        ),
+                                    },
+                                    NodeDef {
+                                        kind: Simple(
+                                            Ident(
+                                                "semi",
+                                            ),
+                                        ),
+                                        tag: None,
+                                    },
+                                ],
+                                inline: false,
+                            },
+                            tag: None,
+                        },
+                    },
+                    PhantomData,
+                ),
+                Wrapper(
+                    Entry {
+                        ident: Ident(
+                            "fn_call",
+                        ),
+                        node: NodeDef {
+                            kind: Group {
+                                nodes: [
+                                    NodeDef {
+                                        kind: Simple(
+                                            Ident(
+                                                "ident",
+                                            ),
+                                        ),
+                                        tag: None,
+                                    },
+                                    NodeDef {
+                                        kind: Delimiter(
+                                            NodeDef {
+                                                kind: Modified(
+                                                    NodeDef {
+                                                        kind: Simple(
+                                                            Ident(
+                                                                "expr",
+                                                            ),
+                                                        ),
+                                                        tag: None,
+                                                    },
+                                                    Csv,
+                                                ),
+                                                tag: None,
+                                            },
+                                            Ident(
+                                                "paren",
+                                            ),
+                                        ),
+                                        tag: Some(
+                                            Ident(
+                                                "args",
+                                            ),
+                                        ),
+                                    },
+                                ],
+                                inline: false,
+                            },
+                            tag: None,
+                        },
+                    },
+                    PhantomData,
+                ),
+                Wrapper(
+                    Entry {
+                        ident: Ident(
+                            "expr",
+                        ),
+                        node: NodeDef {
+                            kind: Simple(
+                                Ident(
+                                    "sum",
+                                ),
+                            ),
+                            tag: None,
+                        },
+                    },
+                    PhantomData,
+                ),
+                Wrapper(
+                    Entry {
+                        ident: Ident(
+                            "sum",
+                        ),
+                        node: NodeDef {
+                            kind: Group {
+                                nodes: [
+                                    NodeDef {
+                                        kind: Simple(
+                                            Ident(
+                                                "product",
+                                            ),
+                                        ),
+                                        tag: Some(
+                                            Ident(
+                                                "leading",
+                                            ),
+                                        ),
+                                    },
+                                    NodeDef {
+                                        kind: Modified(
+                                            NodeDef {
+                                                kind: Simple(
+                                                    Ident(
+                                                        "trailing_product",
+                                                    ),
+                                                ),
+                                                tag: None,
+                                            },
+                                            Repeat,
+                                        ),
+                                        tag: Some(
+                                            Ident(
+                                                "trailing",
+                                            ),
+                                        ),
+                                    },
+                                ],
+                                inline: false,
+                            },
+                            tag: None,
+                        },
+                    },
+                    PhantomData,
+                ),
+                Wrapper(
+                    Entry {
+                        ident: Ident(
+                            "product",
+                        ),
+                        node: NodeDef {
+                            kind: Group {
+                                nodes: [
+                                    NodeDef {
+                                        kind: Simple(
+                                            Ident(
+                                                "unary",
+                                            ),
+                                        ),
+                                        tag: Some(
+                                            Ident(
+                                                "leading",
+                                            ),
+                                        ),
+                                    },
+                                    NodeDef {
+                                        kind: Modified(
+                                            NodeDef {
+                                                kind: Simple(
+                                                    Ident(
+                                                        "trailing_unary",
+                                                    ),
+                                                ),
+                                                tag: None,
+                                            },
+                                            Repeat,
+                                        ),
+                                        tag: Some(
+                                            Ident(
+                                                "trailing",
+                                            ),
+                                        ),
+                                    },
+                                ],
+                                inline: false,
+                            },
+                            tag: None,
+                        },
+                    },
+                    PhantomData,
+                ),
+                Wrapper(
+                    Entry {
+                        ident: Ident(
+                            "trailing_product",
+                        ),
+                        node: NodeDef {
+                            kind: Group {
+                                nodes: [
+                                    NodeDef {
+                                        kind: Simple(
+                                            Ident(
+                                                "add_or_sub",
+                                            ),
+                                        ),
+                                        tag: None,
+                                    },
+                                    NodeDef {
+                                        kind: Simple(
+                                            Ident(
+                                                "product",
+                                            ),
+                                        ),
+                                        tag: None,
+                                    },
+                                ],
+                                inline: false,
+                            },
+                            tag: None,
+                        },
+                    },
+                    PhantomData,
+                ),
+                Wrapper(
+                    Entry {
+                        ident: Ident(
+                            "add_or_sub",
+                        ),
+                        node: NodeDef {
+                            kind: Choice {
+                                first: NodeDef {
+                                    kind: Simple(
+                                        Ident(
+                                            "plus",
+                                        ),
+                                    ),
+                                    tag: None,
+                                },
+                                second: NodeDef {
+                                    kind: Simple(
+                                        Ident(
+                                            "minus",
+                                        ),
+                                    ),
+                                    tag: None,
+                                },
+                                inline: false,
+                            },
+                            tag: None,
+                        },
+                    },
+                    PhantomData,
+                ),
+                Wrapper(
+                    Entry {
+                        ident: Ident(
+                            "trailing_unary",
+                        ),
+                        node: NodeDef {
+                            kind: Group {
+                                nodes: [
+                                    NodeDef {
+                                        kind: Simple(
+                                            Ident(
+                                                "mult_or_div",
+                                            ),
+                                        ),
+                                        tag: None,
+                                    },
+                                    NodeDef {
+                                        kind: Simple(
+                                            Ident(
+                                                "unary",
+                                            ),
+                                        ),
+                                        tag: None,
+                                    },
+                                ],
+                                inline: false,
+                            },
+                            tag: None,
+                        },
+                    },
+                    PhantomData,
+                ),
+                Wrapper(
+                    Entry {
+                        ident: Ident(
+                            "mult_or_div",
+                        ),
+                        node: NodeDef {
+                            kind: Choice {
+                                first: NodeDef {
+                                    kind: Simple(
+                                        Ident(
+                                            "mult",
+                                        ),
+                                    ),
+                                    tag: None,
+                                },
+                                second: NodeDef {
+                                    kind: Simple(
+                                        Ident(
+                                            "div",
+                                        ),
+                                    ),
+                                    tag: None,
+                                },
+                                inline: false,
+                            },
+                            tag: None,
+                        },
+                    },
+                    PhantomData,
+                ),
+                Wrapper(
+                    Entry {
+                        ident: Ident(
+                            "unary",
+                        ),
+                        node: NodeDef {
+                            kind: Group {
+                                nodes: [
+                                    NodeDef {
+                                        kind: Modified(
+                                            NodeDef {
+                                                kind: Simple(
+                                                    Ident(
+                                                        "minus",
+                                                    ),
+                                                ),
+                                                tag: None,
+                                            },
+                                            Repeat,
+                                        ),
+                                        tag: None,
+                                    },
+                                    NodeDef {
+                                        kind: Simple(
+                                            Ident(
+                                                "atom",
+                                            ),
+                                        ),
+                                        tag: None,
+                                    },
+                                ],
+                                inline: false,
+                            },
+                            tag: None,
+                        },
+                    },
+                    PhantomData,
+                ),
+                Wrapper(
+                    Entry {
+                        ident: Ident(
+                            "atom",
+                        ),
+                        node: NodeDef {
+                            kind: Choice {
+                                first: NodeDef {
+                                    kind: Simple(
+                                        Ident(
+                                            "num_lit",
+                                        ),
+                                    ),
+                                    tag: None,
+                                },
+                                second: NodeDef {
+                                    kind: Choice {
+                                        first: NodeDef {
+                                            kind: Delimiter(
+                                                NodeDef {
+                                                    kind: Modified(
+                                                        NodeDef {
+                                                            kind: Simple(
+                                                                Ident(
+                                                                    "expr",
+                                                                ),
+                                                            ),
+                                                            tag: None,
+                                                        },
+                                                        Boxed,
+                                                    ),
+                                                    tag: None,
+                                                },
+                                                Ident(
+                                                    "paren",
+                                                ),
+                                            ),
+                                            tag: None,
+                                        },
+                                        second: NodeDef {
+                                            kind: Simple(
+                                                Ident(
+                                                    "ident",
+                                                ),
+                                            ),
+                                            tag: None,
+                                        },
+                                        inline: false,
+                                    },
+                                    tag: None,
+                                },
+                                inline: false,
+                            },
+                            tag: None,
+                        },
+                    },
+                    PhantomData,
+                ),
+            },
+        ),
+    ),
+)

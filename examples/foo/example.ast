@@ -1,0 +1,13 @@
+file = function*
+function = kw_fn ident ident*:params equals declaration* expr:body semi
+declaration = kw_let ident equals expr:value semi
+fn_call = ident delim[paren]<expr,*>:args
+expr = sum
+sum = product:leading trailing_product*:trailing
+product = unary:leading trailing_unary*:trailing
+trailing_product = add_or_sub product
+add_or_sub = plus | minus
+trailing_unary = mult_or_div unary
+mult_or_div = mult | div
+unary = minus* atom
+atom = num_lit | delim[paren]<expr~> | ident

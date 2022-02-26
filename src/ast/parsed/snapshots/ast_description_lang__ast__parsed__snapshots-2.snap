@@ -1,0 +1,511 @@
+---
+source: src/ast/parsed/mod.rs
+assertion_line: 169
+expression: "Ast::parse(&text).unwrap().transform(&specs)"
+input_file: examples/foo/example.ast
+
+---
+Ok(
+    Ast(
+        NamedSet(
+            {
+                Wrapper(
+                    Node {
+                        ident: Ident(
+                            "file",
+                        ),
+                        kind: Modified(
+                            Node(
+                                Ident(
+                                    "function",
+                                ),
+                            ),
+                            Repeat,
+                        ),
+                        tag: None,
+                    },
+                    PhantomData,
+                ),
+                Wrapper(
+                    Node {
+                        ident: Ident(
+                            "function",
+                        ),
+                        kind: Group {
+                            nodes: [
+                                TaggedNodeKind {
+                                    kind: StaticToken(
+                                        Ident(
+                                            "kw_fn",
+                                        ),
+                                    ),
+                                    tag: None,
+                                },
+                                TaggedNodeKind {
+                                    kind: DynamicToken(
+                                        Ident(
+                                            "ident",
+                                        ),
+                                    ),
+                                    tag: None,
+                                },
+                                TaggedNodeKind {
+                                    kind: Modified(
+                                        DynamicToken(
+                                            Ident(
+                                                "ident",
+                                            ),
+                                        ),
+                                        Repeat,
+                                    ),
+                                    tag: Some(
+                                        Ident(
+                                            "params",
+                                        ),
+                                    ),
+                                },
+                                TaggedNodeKind {
+                                    kind: StaticToken(
+                                        Ident(
+                                            "equals",
+                                        ),
+                                    ),
+                                    tag: None,
+                                },
+                                TaggedNodeKind {
+                                    kind: Modified(
+                                        Node(
+                                            Ident(
+                                                "declaration",
+                                            ),
+                                        ),
+                                        Repeat,
+                                    ),
+                                    tag: None,
+                                },
+                                TaggedNodeKind {
+                                    kind: Node(
+                                        Ident(
+                                            "expr",
+                                        ),
+                                    ),
+                                    tag: Some(
+                                        Ident(
+                                            "body",
+                                        ),
+                                    ),
+                                },
+                                TaggedNodeKind {
+                                    kind: StaticToken(
+                                        Ident(
+                                            "semi",
+                                        ),
+                                    ),
+                                    tag: None,
+                                },
+                            ],
+                            inline: false,
+                        },
+                        tag: None,
+                    },
+                    PhantomData,
+                ),
+                Wrapper(
+                    Node {
+                        ident: Ident(
+                            "declaration",
+                        ),
+                        kind: Group {
+                            nodes: [
+                                TaggedNodeKind {
+                                    kind: StaticToken(
+                                        Ident(
+                                            "kw_let",
+                                        ),
+                                    ),
+                                    tag: None,
+                                },
+                                TaggedNodeKind {
+                                    kind: DynamicToken(
+                                        Ident(
+                                            "ident",
+                                        ),
+                                    ),
+                                    tag: None,
+                                },
+                                TaggedNodeKind {
+                                    kind: StaticToken(
+                                        Ident(
+                                            "equals",
+                                        ),
+                                    ),
+                                    tag: None,
+                                },
+                                TaggedNodeKind {
+                                    kind: Node(
+                                        Ident(
+                                            "expr",
+                                        ),
+                                    ),
+                                    tag: Some(
+                                        Ident(
+                                            "value",
+                                        ),
+                                    ),
+                                },
+                                TaggedNodeKind {
+                                    kind: StaticToken(
+                                        Ident(
+                                            "semi",
+                                        ),
+                                    ),
+                                    tag: None,
+                                },
+                            ],
+                            inline: false,
+                        },
+                        tag: None,
+                    },
+                    PhantomData,
+                ),
+                Wrapper(
+                    Node {
+                        ident: Ident(
+                            "fn_call",
+                        ),
+                        kind: Group {
+                            nodes: [
+                                TaggedNodeKind {
+                                    kind: DynamicToken(
+                                        Ident(
+                                            "ident",
+                                        ),
+                                    ),
+                                    tag: None,
+                                },
+                                TaggedNodeKind {
+                                    kind: Delimited(
+                                        Modified(
+                                            Node(
+                                                Ident(
+                                                    "expr",
+                                                ),
+                                            ),
+                                            Csv,
+                                        ),
+                                        Ident(
+                                            "paren",
+                                        ),
+                                    ),
+                                    tag: Some(
+                                        Ident(
+                                            "args",
+                                        ),
+                                    ),
+                                },
+                            ],
+                            inline: false,
+                        },
+                        tag: None,
+                    },
+                    PhantomData,
+                ),
+                Wrapper(
+                    Node {
+                        ident: Ident(
+                            "expr",
+                        ),
+                        kind: Node(
+                            Ident(
+                                "sum",
+                            ),
+                        ),
+                        tag: None,
+                    },
+                    PhantomData,
+                ),
+                Wrapper(
+                    Node {
+                        ident: Ident(
+                            "sum",
+                        ),
+                        kind: Group {
+                            nodes: [
+                                TaggedNodeKind {
+                                    kind: Node(
+                                        Ident(
+                                            "product",
+                                        ),
+                                    ),
+                                    tag: Some(
+                                        Ident(
+                                            "leading",
+                                        ),
+                                    ),
+                                },
+                                TaggedNodeKind {
+                                    kind: Modified(
+                                        Node(
+                                            Ident(
+                                                "trailing_product",
+                                            ),
+                                        ),
+                                        Repeat,
+                                    ),
+                                    tag: Some(
+                                        Ident(
+                                            "trailing",
+                                        ),
+                                    ),
+                                },
+                            ],
+                            inline: false,
+                        },
+                        tag: None,
+                    },
+                    PhantomData,
+                ),
+                Wrapper(
+                    Node {
+                        ident: Ident(
+                            "product",
+                        ),
+                        kind: Group {
+                            nodes: [
+                                TaggedNodeKind {
+                                    kind: Node(
+                                        Ident(
+                                            "unary",
+                                        ),
+                                    ),
+                                    tag: Some(
+                                        Ident(
+                                            "leading",
+                                        ),
+                                    ),
+                                },
+                                TaggedNodeKind {
+                                    kind: Modified(
+                                        Node(
+                                            Ident(
+                                                "trailing_unary",
+                                            ),
+                                        ),
+                                        Repeat,
+                                    ),
+                                    tag: Some(
+                                        Ident(
+                                            "trailing",
+                                        ),
+                                    ),
+                                },
+                            ],
+                            inline: false,
+                        },
+                        tag: None,
+                    },
+                    PhantomData,
+                ),
+                Wrapper(
+                    Node {
+                        ident: Ident(
+                            "trailing_product",
+                        ),
+                        kind: Group {
+                            nodes: [
+                                TaggedNodeKind {
+                                    kind: Node(
+                                        Ident(
+                                            "add_or_sub",
+                                        ),
+                                    ),
+                                    tag: None,
+                                },
+                                TaggedNodeKind {
+                                    kind: Node(
+                                        Ident(
+                                            "product",
+                                        ),
+                                    ),
+                                    tag: None,
+                                },
+                            ],
+                            inline: false,
+                        },
+                        tag: None,
+                    },
+                    PhantomData,
+                ),
+                Wrapper(
+                    Node {
+                        ident: Ident(
+                            "add_or_sub",
+                        ),
+                        kind: Choice {
+                            nodes: [
+                                TaggedNodeKind {
+                                    kind: StaticToken(
+                                        Ident(
+                                            "plus",
+                                        ),
+                                    ),
+                                    tag: None,
+                                },
+                                TaggedNodeKind {
+                                    kind: StaticToken(
+                                        Ident(
+                                            "minus",
+                                        ),
+                                    ),
+                                    tag: None,
+                                },
+                            ],
+                            inline: false,
+                        },
+                        tag: None,
+                    },
+                    PhantomData,
+                ),
+                Wrapper(
+                    Node {
+                        ident: Ident(
+                            "trailing_unary",
+                        ),
+                        kind: Group {
+                            nodes: [
+                                TaggedNodeKind {
+                                    kind: Node(
+                                        Ident(
+                                            "mult_or_div",
+                                        ),
+                                    ),
+                                    tag: None,
+                                },
+                                TaggedNodeKind {
+                                    kind: Node(
+                                        Ident(
+                                            "unary",
+                                        ),
+                                    ),
+                                    tag: None,
+                                },
+                            ],
+                            inline: false,
+                        },
+                        tag: None,
+                    },
+                    PhantomData,
+                ),
+                Wrapper(
+                    Node {
+                        ident: Ident(
+                            "mult_or_div",
+                        ),
+                        kind: Choice {
+                            nodes: [
+                                TaggedNodeKind {
+                                    kind: StaticToken(
+                                        Ident(
+                                            "mult",
+                                        ),
+                                    ),
+                                    tag: None,
+                                },
+                                TaggedNodeKind {
+                                    kind: StaticToken(
+                                        Ident(
+                                            "div",
+                                        ),
+                                    ),
+                                    tag: None,
+                                },
+                            ],
+                            inline: false,
+                        },
+                        tag: None,
+                    },
+                    PhantomData,
+                ),
+                Wrapper(
+                    Node {
+                        ident: Ident(
+                            "unary",
+                        ),
+                        kind: Group {
+                            nodes: [
+                                TaggedNodeKind {
+                                    kind: Modified(
+                                        StaticToken(
+                                            Ident(
+                                                "minus",
+                                            ),
+                                        ),
+                                        Repeat,
+                                    ),
+                                    tag: None,
+                                },
+                                TaggedNodeKind {
+                                    kind: Node(
+                                        Ident(
+                                            "atom",
+                                        ),
+                                    ),
+                                    tag: None,
+                                },
+                            ],
+                            inline: false,
+                        },
+                        tag: None,
+                    },
+                    PhantomData,
+                ),
+                Wrapper(
+                    Node {
+                        ident: Ident(
+                            "atom",
+                        ),
+                        kind: Choice {
+                            nodes: [
+                                TaggedNodeKind {
+                                    kind: DynamicToken(
+                                        Ident(
+                                            "num_lit",
+                                        ),
+                                    ),
+                                    tag: None,
+                                },
+                                TaggedNodeKind {
+                                    kind: Delimited(
+                                        Modified(
+                                            Node(
+                                                Ident(
+                                                    "expr",
+                                                ),
+                                            ),
+                                            Boxed,
+                                        ),
+                                        Ident(
+                                            "paren",
+                                        ),
+                                    ),
+                                    tag: None,
+                                },
+                                TaggedNodeKind {
+                                    kind: DynamicToken(
+                                        Ident(
+                                            "ident",
+                                        ),
+                                    ),
+                                    tag: None,
+                                },
+                            ],
+                            inline: false,
+                        },
+                        tag: None,
+                    },
+                    PhantomData,
+                ),
+            },
+        ),
+    ),
+)

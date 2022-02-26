@@ -1,0 +1,141 @@
+---
+source: src/ast/print.rs
+assertion_line: 910
+expression: printed
+input_file: examples/foo/example.ast
+
+---
+#![allow(dead_code)]
+use crate::tokens;
+#[derive(Clone, Debug)]
+pub struct Function {
+  pub ident: tokens::Ident,
+  pub params: Vec<tokens::Ident>,
+  pub declaration: Vec<Declaration>,
+  pub body: Sum,
+}
+#[derive(Clone, Debug)]
+pub struct Declaration {
+  pub ident: tokens::Ident,
+  pub value: Sum,
+}
+#[derive(Clone, Debug)]
+pub struct FnCall {
+  pub ident: tokens::Ident,
+  pub args: Vec<Sum>,
+}
+#[derive(Clone, Debug)]
+pub struct Sum {
+  pub leading: Product,
+  pub trailing: Vec<TrailingProduct>,
+}
+#[derive(Clone, Debug)]
+pub struct Product {
+  pub leading: Atom,
+  pub trailing: Vec<TrailingUnary>,
+}
+#[derive(Clone, Debug)]
+pub struct TrailingProduct {
+  pub add_or_sub: AddOrSub,
+  pub product: Product,
+}
+#[derive(Clone, Debug)]
+pub enum AddOrSub {
+  Plus,
+  Minus,
+}
+#[derive(Clone, Debug)]
+pub struct TrailingUnary {
+  pub mult_or_div: MultOrDiv,
+  pub unary: Atom,
+}
+#[derive(Clone, Debug)]
+pub enum MultOrDiv {
+  Mult,
+  Div,
+}
+#[derive(Clone, Debug)]
+pub enum Atom {
+  NumLit(tokens::NumLit),
+  Expr(Box<Sum>),
+  Ident(tokens::Ident),
+}
+pub mod parse {
+  use super::*;
+  use chumsky::prelude::*;
+  use tokens::{parse::*, Token};
+  type Error = ::chumsky::error::Simple<tokens::Token>;
+  pub fn file() -> impl Parser<Token, Vec<Function>, Error = Error> {
+    function().repeated()
+  }
+  pub fn function() -> impl Parser<Token, Function, Error = Error> {
+    kw_fn()
+      .then(ident())
+      .then(ident().repeated())
+      .then(equals())
+      .then(declaration().repeated())
+      .then(expr())
+      .then(semi())
+      .map(|((((((_0, _1), _2), _3), _4), _5), _6)| Function {
+        ident: _1,
+        params: _2,
+        declaration: _4,
+        body: _5,
+      })
+  }
+  pub fn declaration() -> impl Parser<Token, Declaration, Error = Error> {
+    kw_let()
+      .then(ident())
+      .then(equals())
+      .then(expr())
+      .then(semi())
+      .map(|((((_0, _1), _2), _3), _4)| Declaration {
+        ident: _1,
+        value: _3,
+      })
+  }
+  pub fn fn_call() -> impl Parser<Token, FnCall, Error = Error> {
+    ident()
+      .then(
+        expr()
+          .separated_by(comma())
+          .delimited_by(left_paren(), right_paren()),
+      )
+      .map(|(_0, _1)| FnCall {
+        ident: _0,
+        args: _1,
+      })
+  }
+  pub fn expr() -> impl Parser<Token, Sum, Error = Error> {
+    RECURSIVE.with(|parsers| parsers.borrow().0.clone())
+  }
+  pub fn sum() -> impl Parser<Token, Sum, Error = Error> {
+    RECURSIVE.with(|parsers| parsers.borrow().1.clone())
+  }
+  pub fn product() -> impl Parser<Token, Product, Error = Error> {
+    RECURSIVE.with(|parsers| parsers.borrow().2.clone())
+  }
+  pub fn trailing_product() -> impl Parser<Token, TrailingProduct, Error = Error> {
+    RECURSIVE.with(|parsers| parsers.borrow().3.clone())
+  }
+  pub fn add_or_sub() -> impl Parser<Token, AddOrSub, Error = Error> {
+    plus()
+      .map(|_| AddOrSub::Plus)
+      .or(minus().map(|_| AddOrSub::Minus))
+  }
+  pub fn trailing_unary() -> impl Parser<Token, TrailingUnary, Error = Error> {
+    RECURSIVE.with(|parsers| parsers.borrow().4.clone())
+  }
+  pub fn mult_or_div() -> impl Parser<Token, MultOrDiv, Error = Error> {
+    mult()
+      .map(|_| MultOrDiv::Mult)
+      .or(div().map(|_| MultOrDiv::Div))
+  }
+  pub fn unary() -> impl Parser<Token, Atom, Error = Error> {
+    RECURSIVE.with(|parsers| parsers.borrow().5.clone())
+  }
+  pub fn atom() -> impl Parser<Token, Atom, Error = Error> {
+    RECURSIVE.with(|parsers| parsers.borrow().6.clone())
+  }
+  thread_local! { static RECURSIVE : std :: cell :: RefCell < (Recursive < 'static , Token , Sum , Error > , Recursive < 'static , Token , Sum , Error > , Recursive < 'static , Token , Product , Error > , Recursive < 'static , Token , TrailingProduct , Error > , Recursive < 'static , Token , TrailingUnary , Error > , Recursive < 'static , Token , Atom , Error > , Recursive < 'static , Token , Atom , Error >) > = std :: cell :: RefCell :: new ({ # [allow (unused_assignments)] let mut expr = recursive (| _ | todo ()) ; # [allow (unused_assignments)] let mut sum = recursive (| _ | todo ()) ; # [allow (unused_assignments)] let mut product = recursive (| _ | todo ()) ; # [allow (unused_assignments)] let mut trailing_product = recursive (| _ | todo ()) ; # [allow (unused_assignments)] let mut trailing_unary = recursive (| _ | todo ()) ; # [allow (unused_assignments)] let mut unary = recursive (| _ | todo ()) ; # [allow (unused_assignments)] let mut atom = recursive (| _ | todo ()) ; atom = recursive (| # [allow (unused_variables)] atom | { unary = recursive (| # [allow (unused_variables)] unary | { trailing_unary = recursive (| # [allow (unused_variables)] trailing_unary | { trailing_product = recursive (| # [allow (unused_variables)] trailing_product | { product = recursive (| # [allow (unused_variables)] product | { sum = recursive (| # [allow (unused_variables)] sum | { expr = recursive (| # [allow (unused_variables)] expr | { sum . clone () }) ; product . clone () . then (trailing_product . clone () . repeated ()) . map (| (_0 , _1) | Sum { leading : _0 , trailing : _1 }) }) ; unary . clone () . then (trailing_unary . clone () . repeated ()) . map (| (_0 , _1) | Product { leading : _0 , trailing : _1 }) }) ; plus () . map (| _ | AddOrSub :: Plus) . or (minus () . map (| _ | AddOrSub :: Minus)) . then (product . clone ()) . map (| (_0 , _1) | TrailingProduct { add_or_sub : _0 , product : _1 }) }) ; mult () . map (| _ | MultOrDiv :: Mult) . or (div () . map (| _ | MultOrDiv :: Div)) . then (unary . clone ()) . map (| (_0 , _1) | TrailingUnary { mult_or_div : _0 , unary : _1 }) }) ; minus () . repeated () . then (atom . clone ()) . map (| (_0 , _1) | _1) }) ; num_lit () . map (Atom :: NumLit) . or (expr . clone () . map (Box :: new) . delimited_by (left_paren () , right_paren ()) . map (Atom :: Expr)) . or (ident () . map (Atom :: Ident)) }) ; (expr , sum , product , trailing_product , trailing_unary , unary , atom) }) ; }
+}
