@@ -7,10 +7,11 @@ use std::str::FromStr;
 impl Specs<'_> {
   pub fn generate_tokens_mod(&self, config: &Config<'_>) -> Result<TokenStream> {
     let error = TokenStream::from_str(config.error).map_err(|err| anyhow!("{err}"))?;
+    let tokens_mod = TokenStream::from_str(config.tokens_mod).map_err(|err| anyhow!("{err}"))?;
 
     let enum_ = self.generate_tokens_enum();
     let fmt = self.generate_tokens_fmt();
-    let parse = self.generate_tokens_parse(error);
+    let parse = self.generate_tokens_parse(error, tokens_mod);
     Ok(quote! {
       #![allow(dead_code)]
       #enum_
@@ -75,7 +76,7 @@ impl Specs<'_> {
     }
   }
 
-  fn generate_tokens_parse(&self, error: TokenStream) -> TokenStream {
+  fn generate_tokens_parse(&self, error: TokenStream, tokens_mod: TokenStream) -> TokenStream {
     let static_tokens = self.static_tokens.iter().map(|(ident, _)| {
       let ty = ident.as_type();
       quote! {
@@ -97,7 +98,7 @@ impl Specs<'_> {
     quote! {
       pub mod parse {
         use chumsky::prelude::*;
-        use super::Token;
+        use #tokens_mod::{self, Token};
 
         type Error = #error;
 
