@@ -93,7 +93,10 @@ impl Ast<'_> {
               let ty = self.print_as_type(&primary.kind, Some(primary.ident));
               quote! { (Option<#ty>) }
             }
-            NodeKind::Delimited(inner, _) => self.print_as_type(inner, None).unwrap_or_default(),
+            NodeKind::Delimited(inner, _) => {
+              let ty = self.print_as_type(inner, None).unwrap_or_default();
+              quote! { (#ty) }
+            }
             NodeKind::Modified(inner, modifier) => {
               let ty = self.print_modified_type(&**inner, None, *modifier);
               quote! { (#ty) }
