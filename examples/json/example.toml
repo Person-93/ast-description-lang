@@ -9,7 +9,7 @@ kw_false = "false"
 comma = ","
 
 [dynamic_tokens]
-num_lit = '''\d+(\.\d+)'''
+num_lit = '''\d+(\.\d+)?'''
 str_lit = '''"([^"]|(\\"))*"'''
 
 [delimiters]
