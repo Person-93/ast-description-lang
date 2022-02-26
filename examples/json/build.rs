@@ -8,12 +8,12 @@ fn main() {
   let specs = fs::read_to_string("example.toml").unwrap();
   let specs: Specs = toml::de::from_str(&specs).unwrap();
 
-  let tokens = specs.generate_tokens_mod().unwrap();
-  fs::write("src/tokens/generated.rs", tokens.to_string()).unwrap();
-
   let config = Config::default();
 
+  let tokens = specs.generate_tokens_mod(&config).unwrap();
+  fs::write("src/tokens/generated.rs", tokens.to_string()).unwrap();
+
   let ast = fs::read_to_string("example.ast").unwrap();
-  let ast = ast_description_lang::generate_ast_mod(&ast, &specs, config).unwrap();
+  let ast = ast_description_lang::generate_ast_mod(&ast, &specs, &config).unwrap();
   fs::write("src/ast/generated.rs", ast.to_string()).unwrap();
 }

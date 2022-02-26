@@ -1,6 +1,5 @@
 json = object | array | num_lit | str_lit | bool
 object = delim[brace]<member,*>
-member = key colon json
-key = str_lit | ident
+member = str_lit colon json
 array = delim[bracket]<json,*>
 bool = kw_true | kw_false

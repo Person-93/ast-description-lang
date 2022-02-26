@@ -66,4 +66,4 @@ fn is_rust_keyword(word: &str) -> bool {
 
 #[cfg(test)]
 #[allow(clippy::type_complexity)]
-const SNAPSHOT_CASES: &[&str] = &["empty", "json"];
+const SNAPSHOT_CASES: &[&str] = &["json"];

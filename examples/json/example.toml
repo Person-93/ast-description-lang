@@ -9,7 +9,6 @@ kw_false = "false"
 comma = ","
 
 [dynamic_tokens]
-ident = "[[:alpha:]_][[:alnum:]_]*"
 num_lit = '''\d+(\.\d+)'''
 str_lit = '''"([^"]|(\\"))*"'''
 

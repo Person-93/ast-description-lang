@@ -12,7 +12,7 @@ mod parsed;
 mod print;
 mod raw;
 
-pub fn generate_ast_mod(text: &str, specs: &Specs<'_>, config: Config<'_>) -> Result<TokenStream> {
+pub fn generate_ast_mod(text: &str, specs: &Specs<'_>, config: &Config<'_>) -> Result<TokenStream> {
   let error = TokenStream::from_str(config.error)
     .map_err(|err| anyhow!("{err}"))
     .context("failed to lex the error type")?;

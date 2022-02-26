@@ -1,29 +1,47 @@
 pub use self::generated::*;
 use logos::Lexer;
-use std::{num::ParseFloatError, str::FromStr};
+use std::fmt::{self, Display, Formatter};
 
 mod generated;
 
-pub struct Ident(String);
+// the float in the number literal is split into two parts
+// the part before the decimal and the part after it
+// this is because all tokens must be hashable, but floats
+// can't be hashed
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
+pub struct NumLit(i128, Option<u128>);
 
-pub struct NumLit(f64);
-
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub struct StrLit(String);
 
-impl Ident {
-  fn new(lexer: Lexer<Token>) -> Self {
-    Self(String::from(lexer.slice()))
+impl NumLit {
+  fn new(lexer: &mut Lexer<Token>) -> Self {
+    let mut iter = lexer.slice().split('.');
+    Self(
+      iter.next().unwrap().parse().unwrap(),
+      iter.next().map(|s| s.parse().unwrap()),
+    )
   }
 }
 
-impl NumLit {
-  fn new(lexer: Lexer<Token>) -> Result<Self, ParseFloatError> {
-    f64::from_str(lexer.slice()).map(Self)
+impl Display for NumLit {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    write!(f, "{}", self.0)?;
+    if let Some(dec) = self.1 {
+      write!(f, ".{dec}")?;
+    }
+    Ok(())
   }
 }
 
 impl StrLit {
-  fn new(lexer: Lexer<Token>) -> Self {
+  fn new(lexer: &mut Lexer<Token>) -> Self {
     Self(String::from(lexer.slice()))
+  }
+}
+
+impl Display for StrLit {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    Display::fmt(&self.0, f)
   }
 }
