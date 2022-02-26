@@ -10,22 +10,22 @@ use std::{
 use thiserror::Error;
 
 #[derive(Debug)]
-pub struct Ast<'a>(NamedSet<'a, Entry<'a>>);
+pub(super) struct Ast<'a>(NamedSet<'a, Entry<'a>>);
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Entry<'a> {
+pub(super) struct Entry<'a> {
   pub ident: Ident<'a>,
   pub node: NodeDef<'a>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
-pub struct NodeDef<'a> {
+pub(super) struct NodeDef<'a> {
   pub kind: NodeKindDef<'a>,
   pub tag: Option<Ident<'a>>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
-pub enum NodeKindDef<'a> {
+pub(super) enum NodeKindDef<'a> {
   Simple(Ident<'a>),
   Modified(Box<NodeDef<'a>>, Modifier),
   Delimiter(Box<NodeDef<'a>>, Ident<'a>),
@@ -436,7 +436,7 @@ fn snapshots() {
   use insta::{assert_debug_snapshot, with_settings};
   use std::{fs, path::Path};
 
-  for (name, _) in super::SNAPSHOT_CASES {
+  for name in crate::SNAPSHOT_CASES {
     let mut path = Path::new(env!("CARGO_MANIFEST_DIR"))
       .join("examples")
       .join(name);

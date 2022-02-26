@@ -9,23 +9,23 @@ use std::{
 mod transform;
 
 #[derive(Debug, Clone)]
-pub struct Ast<'a>(NamedSet<'a, Node<'a>>);
+pub(super) struct Ast<'a>(NamedSet<'a, Node<'a>>);
 
 #[derive(Clone, Debug)]
-pub struct Node<'n> {
+pub(super) struct Node<'n> {
   pub ident: Ident<'n>,
   pub kind: NodeKind<'n>,
   pub tag: Option<Ident<'n>>,
 }
 
 #[derive(Clone, Debug)]
-pub struct TaggedNodeKind<'n> {
+pub(super) struct TaggedNodeKind<'n> {
   pub kind: NodeKind<'n>,
   pub tag: Option<Ident<'n>>,
 }
 
 #[derive(Clone, Debug)]
-pub enum NodeKind<'n> {
+pub(super) enum NodeKind<'n> {
   Node(Ident<'n>),
   StaticToken(Ident<'n>),
   DynamicToken(Ident<'n>),
@@ -149,18 +149,23 @@ impl<'n> Unnamed<'n> for TaggedNodeKind<'n> {
 #[cfg(test)]
 #[test]
 fn snapshots() {
-  use crate::raw::Ast;
+  use super::raw::Ast;
   use insta::{assert_debug_snapshot, with_settings};
   use std::{fs, path::Path};
 
-  for (name, specs) in super::SNAPSHOT_CASES {
+  for name in crate::SNAPSHOT_CASES {
     let mut path = Path::new(env!("CARGO_MANIFEST_DIR"))
       .join("examples")
       .join(name);
+
+    path.set_extension("toml");
+    let specs = fs::read_to_string(&path).unwrap();
+    let specs = toml::de::from_str(&specs).unwrap();
+
     path.set_extension("ast");
     let text = fs::read_to_string(&path).unwrap();
     with_settings!({input_file => Some(path)}, {
-      assert_debug_snapshot!(Ast::parse(&text).unwrap().transform(&specs()));
+      assert_debug_snapshot!(Ast::parse(&text).unwrap().transform(&specs));
     });
   }
 }

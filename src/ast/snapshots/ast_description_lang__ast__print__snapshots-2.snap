@@ -1,6 +1,6 @@
 ---
-source: src/print.rs
-assertion_line: 898
+source: src/ast/print.rs
+assertion_line: 894
 expression: printed
 input_file: examples/json.ast
 

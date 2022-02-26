@@ -1,5 +1,5 @@
 ---
-source: src/parsed/mod.rs
+source: src/ast/parsed/mod.rs
 assertion_line: 163
 expression: "Ast::parse(&text).unwrap().transform(&specs())"
 input_file: examples/empty.ast

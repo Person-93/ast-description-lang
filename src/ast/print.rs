@@ -1,8 +1,8 @@
 use super::{
   collapsed::{Ast, Choice, ChoiceKind, Group, GroupKind, Node, NodeKind},
-  is_rust_keyword, Ident, Modifier, Specs,
+  Modifier,
 };
-use crate::collections::NamedItem;
+use crate::{collections::NamedItem, is_rust_keyword, Ident, Specs};
 use heck::ToPascalCase;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
@@ -838,7 +838,8 @@ fn ident_from_idx(idx: usize) -> proc_macro2::Ident {
 #[cfg(test)]
 #[test]
 fn snapshots() {
-  use crate::{raw::Ast, Config};
+  use super::raw::Ast;
+  use crate::Config;
   use insta::{assert_snapshot, with_settings};
   use std::{
     fs,
@@ -848,14 +849,20 @@ fn snapshots() {
     str::FromStr,
   };
 
-  for (name, specs) in super::SNAPSHOT_CASES {
+  for name in crate::SNAPSHOT_CASES {
     let mut path = Path::new(env!("CARGO_MANIFEST_DIR"))
       .join("examples")
       .join(name);
+
+    path.set_extension("toml");
+    let specs = fs::read_to_string(&path).unwrap();
+    let specs = toml::de::from_str(&specs).unwrap();
+
     path.set_extension("ast");
     let text = fs::read_to_string(&path).unwrap();
-    let specs = specs();
+
     let config = Config::default();
+
     let printed = Ast::parse(&text)
       .unwrap()
       .transform(&specs)

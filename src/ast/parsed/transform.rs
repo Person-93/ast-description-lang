@@ -1,11 +1,11 @@
 use super::{
   super::{
     raw::{Ast as RawAst, NodeDef, NodeKindDef},
-    Modifier, Specs,
+    Modifier,
   },
   Ast, Node, NodeKind, TaggedNodeKind,
 };
-use crate::Ident;
+use crate::{Ident, Specs};
 use std::{cell::RefCell, collections::hash_map::HashMap, marker::PhantomData};
 use thiserror::Error;
 

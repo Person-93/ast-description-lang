@@ -1,5 +1,5 @@
 ---
-source: src/collapsed/mod.rs
+source: src/ast/collapsed/mod.rs
 assertion_line: 204
 expression: "Ast::parse(&text).unwrap().transform(&specs()).unwrap().transform()"
 input_file: examples/empty.ast
