@@ -1,13 +1,16 @@
-use crate::Specs;
-use anyhow::Result;
+use crate::{Config, Specs};
+use anyhow::{anyhow, Result};
 use proc_macro2::TokenStream;
 use quote::quote;
+use std::str::FromStr;
 
 impl Specs<'_> {
-  pub fn generate_tokens_mod(&self) -> Result<TokenStream> {
+  pub fn generate_tokens_mod(&self, config: &Config<'_>) -> Result<TokenStream> {
+    let error = TokenStream::from_str(config.error).map_err(|err| anyhow!("{err}"))?;
+
     let enum_ = self.generate_tokens_enum();
     let fmt = self.generate_tokens_fmt();
-    let parse = self.generate_tokens_parse();
+    let parse = self.generate_tokens_parse(error);
     Ok(quote! {
       #![allow(dead_code)]
       #enum_
@@ -36,7 +39,6 @@ impl Specs<'_> {
 
     quote! {
       #[derive(Clone, Debug, logos::Logos, Eq, PartialEq, Hash)]
-      #[cfg_attr(test, derive(serde::Serialize))]
       pub enum Token {
         #[regex(r"\s+", logos::skip)]
         #[error]
@@ -73,7 +75,7 @@ impl Specs<'_> {
     }
   }
 
-  fn generate_tokens_parse(&self) -> TokenStream {
+  fn generate_tokens_parse(&self, error: TokenStream) -> TokenStream {
     let static_tokens = self.static_tokens.iter().map(|(ident, _)| {
       let ty = ident.as_type();
       quote! {
@@ -97,7 +99,7 @@ impl Specs<'_> {
         use chumsky::prelude::*;
         use super::Token;
 
-        type Error = crate::error::ParseError;
+        type Error = #error;
 
         #(#static_tokens)*
         #(#dynamic_tokens)*
