@@ -235,7 +235,10 @@ impl Ast<'_> {
               .unwrap_or_else(|| child.ident.as_type().to_token_stream())
           }
           NodeKind::StaticToken(_) => quote! { usize },
-          NodeKind::DynamicToken(ident) => ident.as_type().to_token_stream(),
+          NodeKind::DynamicToken(ident) => {
+            let ty = ident.as_type();
+            quote! { tokens::#ty }
+          }
           NodeKind::Group(Group {
             members,
             kind,
@@ -291,7 +294,7 @@ impl Ast<'_> {
     let ident = node.ident;
     let ty: TokenStream =
       match &node.kind {
-        NodeKind::Node(_) => todo!(),
+        NodeKind::Node(child) => self.get(*child).unwrap().ident.as_type().to_token_stream(),
         NodeKind::StaticToken(_) => quote! { () },
         NodeKind::DynamicToken(ident) => ident.as_type().to_token_stream(),
         NodeKind::Group(Group {
@@ -652,16 +655,16 @@ impl Ast<'_> {
             });
 
           let members = members.iter().enumerate().map(|(current_idx, node)| {
-            if self.is_node_cyclic(node) {
+            let parser = if self.is_node_cyclic(node) {
               let ident = node.ident;
               quote! { #ident.clone() }
             } else {
-              let parser = self.print_recursive_sub_parser(&node.kind, hint, specs);
-              if current_idx == 0 {
-                parser
-              } else {
-                quote! { .then(#parser) }
-              }
+              self.print_recursive_sub_parser(&node.kind, Some(node.ident), specs)
+            };
+            if current_idx == 0 {
+              parser
+            } else {
+              quote! { .then(#parser) }
             }
           });
 
@@ -683,7 +686,7 @@ impl Ast<'_> {
             .map(|node| {
               self
                 .print_as_type(&node.kind, Some(node.ident))
-                .map(|_| node.ident)
+                .map(|_| node.tag.unwrap_or(node.ident))
             })
             .enumerate()
             .filter_map(|(idx, ident)| ident.map(|ident| (idx, ident)))
@@ -699,15 +702,16 @@ impl Ast<'_> {
             });
 
           let members = members.iter().enumerate().map(|(current_idx, node)| {
-            if self.is_node_cyclic(node) {
-              node.ident.to_token_stream()
+            let ident = node.ident;
+            let parser = if self.is_node_cyclic(node) {
+              quote! { #ident.clone() }
             } else {
-              let parser = self.print_recursive_sub_parser(&node.kind, hint, specs);
-              if current_idx == 0 {
-                parser
-              } else {
-                quote! { .then(#parser) }
-              }
+              self.print_recursive_sub_parser(&node.kind, Some(ident), specs)
+            };
+            if current_idx == 0 {
+              parser
+            } else {
+              quote! { .then(#parser) }
             }
           });
 
@@ -728,7 +732,7 @@ impl Ast<'_> {
           let parser = if self.is_node_cyclic(node) {
             quote! { #ident.clone() }
           } else {
-            self.print_recursive_sub_parser(&node.kind, hint, specs)
+            self.print_recursive_sub_parser(&node.kind, Some(ident), specs)
           };
 
           let func = make_func(self, &node.kind, ty.clone(), variant.to_token_stream());
@@ -777,7 +781,9 @@ impl Ast<'_> {
           quote! { #ident.clone() }
         } else {
           match &primary.kind {
-            NodeKind::Group(_) => self.print_recursive_sub_parser(&primary.kind, hint, specs),
+            NodeKind::Group(_) => {
+              self.print_recursive_sub_parser(&primary.kind, Some(primary.ident), specs)
+            }
             _ => {
               let ident = primary.ident;
               quote! { #ident() }
