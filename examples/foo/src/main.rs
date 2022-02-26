@@ -8,6 +8,7 @@ mod ast;
 mod tokens;
 
 fn main() -> Result<()> {
+  #[allow(clippy::blacklisted_name)]
   let foo = std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/sample.foo"))?;
   let iter = Token::lexer(&foo).spanned();
   let parsed = ast::parse::file()

@@ -615,6 +615,7 @@ impl Ast<'_> {
 
     quote! {
       thread_local! {
+        #[allow(clippy::type_complexity)]
         static RECURSIVE: std::cell::RefCell<(#(#parser_types),*)> = std::cell::RefCell::new({
           #(#decls)*
           #body
