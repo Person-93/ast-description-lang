@@ -6,6 +6,7 @@ right_bracket = "]"
 colon = ":"
 kw_true = "true"
 kw_false = "false"
+comma = ","
 
 [dynamic_tokens]
 ident = "[[:alpha:]_][[:alnum:]_]*"

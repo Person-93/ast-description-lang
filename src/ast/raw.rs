@@ -437,10 +437,10 @@ fn snapshots() {
   use std::{fs, path::Path};
 
   for name in crate::SNAPSHOT_CASES {
-    let mut path = Path::new(env!("CARGO_MANIFEST_DIR"))
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
       .join("examples")
-      .join(name);
-    path.set_extension("ast");
+      .join(name)
+      .join("example.ast");
     let text = fs::read_to_string(&path).unwrap();
     with_settings!({input_file => Some(path)}, {
       assert_debug_snapshot!(Ast::parse(&text));

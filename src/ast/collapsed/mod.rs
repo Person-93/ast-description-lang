@@ -197,7 +197,8 @@ fn snapshots() {
   for name in crate::SNAPSHOT_CASES {
     let mut path = Path::new(env!("CARGO_MANIFEST_DIR"))
       .join("examples")
-      .join(name);
+      .join(name)
+      .join("example");
 
     path.set_extension("toml");
     let specs = fs::read_to_string(&path).unwrap();
