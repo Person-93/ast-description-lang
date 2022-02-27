@@ -98,6 +98,7 @@ impl Specs<'_> {
     quote! {
       pub mod parse {
         use chumsky::prelude::*;
+        #[allow(unused_imports)]
         use #tokens_mod::{self, Token};
 
         type Error = #error;
