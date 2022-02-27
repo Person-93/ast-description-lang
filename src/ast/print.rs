@@ -619,12 +619,14 @@ impl Ast<'_> {
 
     quote! {
       thread_local! {
-        #[allow(clippy::type_complexity)]
-        static RECURSIVE: std::cell::RefCell<(#(#parser_types),*)> = std::cell::RefCell::new({
-          #(#decls)*
-          #body
-          #idents
-        });
+        static RECURSIVE: std::cell::RefCell<RecursiveParsers> =
+          std::cell::RefCell::new(recursive_parsers());
+      }
+      type RecursiveParsers = (#(#parser_types),*);
+      fn recursive_parsers() -> RecursiveParsers {
+        #(#decls)*
+        #body
+        #idents
       }
     }
   }
