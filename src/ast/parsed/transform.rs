@@ -61,6 +61,7 @@ fn node_from_def(node_def_kind: ValidNodeKind) -> NodeKind {
       NodeKind::Delimited(Box::new(node_from_def(inner.kind)), delimiter)
     }
     ValidNodeKind::Todo => NodeKind::Todo,
+    ValidNodeKind::End => NodeKind::End
   }
 }
 
@@ -134,6 +135,7 @@ impl<'v, 'ast: 'v, 's: 'ast> Validator<'v, 'ast, 's> {
             inline: *inline,
           },
           NodeKindDef::Todo => ValidNodeKind::Todo,
+          NodeKindDef::End => ValidNodeKind::End,
         };
         self
           .cache
@@ -187,6 +189,7 @@ enum ValidNodeKind<'a> {
   },
   Delimited(Box<ValidNode<'a>>, Ident<'a>),
   Todo,
+  End,
 }
 
 #[derive(Clone, Debug, Error)]

@@ -1,6 +1,6 @@
 ---
 source: src/ast/parsed/mod.rs
-assertion_line: 169
+assertion_line: 172
 expression: "Ast::parse(&text).unwrap().transform(&specs)"
 input_file: examples/foo/example.ast
 
@@ -14,14 +14,26 @@ Ok(
                         ident: Ident(
                             "file",
                         ),
-                        kind: Modified(
-                            Node(
-                                Ident(
-                                    "function",
-                                ),
-                            ),
-                            Repeat,
-                        ),
+                        kind: Group {
+                            nodes: [
+                                TaggedNodeKind {
+                                    kind: Modified(
+                                        Node(
+                                            Ident(
+                                                "function",
+                                            ),
+                                        ),
+                                        Repeat,
+                                    ),
+                                    tag: None,
+                                },
+                                TaggedNodeKind {
+                                    kind: End,
+                                    tag: None,
+                                },
+                            ],
+                            inline: false,
+                        },
                         tag: None,
                     },
                     PhantomData,
@@ -470,6 +482,14 @@ Ok(
                                     kind: DynamicToken(
                                         Ident(
                                             "num_lit",
+                                        ),
+                                    ),
+                                    tag: None,
+                                },
+                                TaggedNodeKind {
+                                    kind: Node(
+                                        Ident(
+                                            "fn_call",
                                         ),
                                     ),
                                     tag: None,

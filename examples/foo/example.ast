@@ -1,4 +1,4 @@
-file = function*
+file = function* EOF
 function = kw_fn ident ident*:params equals declaration* expr:body semi
 declaration = kw_let ident equals expr:value semi
 fn_call = ident delim[paren]<expr,*>:args

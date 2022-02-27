@@ -102,6 +102,7 @@ impl Ast<'_> {
               quote! { (#ty) }
             }
             NodeKind::Todo => quote! { () },
+            NodeKind::End => quote! {},
           };
           quote! { #ty #body }
         });
@@ -143,9 +144,11 @@ impl Ast<'_> {
         | NodeKind::Delimited(_, _)
         | NodeKind::Modified(_, _)
         | NodeKind::Todo => None,
+        NodeKind::End => unreachable!(),
       },
       NodeKind::Modified(..) => None,
       NodeKind::Todo => None,
+      NodeKind::End => None,
     });
 
     let parsers = self.nodes.iter().map(|node| self.print_parser(node, specs));
@@ -213,6 +216,7 @@ impl Ast<'_> {
         Some(self.print_modified_type(&**inner, None, *modifier))
       }
       NodeKind::Todo => Some(quote! { () }),
+      NodeKind::End => None,
     }
   }
 
@@ -270,6 +274,7 @@ impl Ast<'_> {
           },
           NodeKind::Modified(_, _) => unreachable!(),
           NodeKind::Todo => quote! { () },
+          NodeKind::End => unreachable!(),
         };
         quote! { Vec<#ty> }
       }
@@ -323,6 +328,7 @@ impl Ast<'_> {
           }),
         NodeKind::Modified(inner, modifier) => self.print_modified_type(inner, None, *modifier),
         NodeKind::Todo => quote! { () },
+        NodeKind::End => quote! { () },
       };
     let body = if self.is_node_cyclic(node) {
       let idx = self.index_of(node.ident).unwrap();
@@ -478,6 +484,7 @@ impl Ast<'_> {
               NodeKind::Delimited(_, _) => quote! { #ty::#variant },
               NodeKind::Modified(_, _) => quote! { #ty::#variant },
               NodeKind::Todo => quote! { #ty::#variant },
+              NodeKind::End => quote! { |_| #ty::#variant },
             }
           }
         });
@@ -505,6 +512,7 @@ impl Ast<'_> {
         modify_parser(inner, self.print_parser_body(inner, None, specs), *modifier)
       }
       NodeKind::Todo => print_todo(),
+      NodeKind::End => quote! { end() },
     }
   }
 
@@ -535,6 +543,7 @@ impl Ast<'_> {
         }
         NodeKind::Modified(inner, modifier) => modify_parser(inner, parser, *modifier),
         NodeKind::Todo => print_todo(),
+        NodeKind::End => parser,
       }
     }
   }
@@ -549,7 +558,8 @@ impl Ast<'_> {
       | NodeKind::DynamicToken(_)
       | NodeKind::Delimited(_, _)
       | NodeKind::Modified(_, _)
-      | NodeKind::Todo => false,
+      | NodeKind::Todo
+      | NodeKind::End => false,
     }
   }
 
@@ -762,6 +772,7 @@ impl Ast<'_> {
               NodeKind::Delimited(_, _) => quote! { #ty::#variant },
               NodeKind::Modified(_, _) => quote! { #ty::#variant },
               NodeKind::Todo => quote! { #ty::#variant },
+              NodeKind::End => quote! { |_| #ty::#variant },
             }
           }
         });
@@ -798,6 +809,7 @@ impl Ast<'_> {
         *modifier,
       ),
       NodeKind::Todo => print_todo(),
+      NodeKind::End => quote! { end() },
     }
   }
 }

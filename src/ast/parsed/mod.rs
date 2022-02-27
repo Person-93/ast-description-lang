@@ -40,6 +40,7 @@ pub(super) enum NodeKind<'n> {
   Delimited(Box<NodeKind<'n>>, Ident<'n>),
   Modified(Box<NodeKind<'n>>, Modifier),
   Todo,
+  End,
 }
 
 impl<'a, 'n: 'a> FromIterator<Node<'n>> for Ast<'a> {
@@ -111,8 +112,10 @@ impl Display for NodeKind<'_> {
         | NodeKind::Delimited(..) => write!(f, "{inner}{modifier}"),
         NodeKind::Modified(..) => unreachable!(),
         NodeKind::Todo => write!(f, "!todo"),
+        NodeKind::End => write!(f, "EOF"),
       },
       NodeKind::Todo => write!(f, "!todo"),
+      NodeKind::End => write!(f, "EOF"),
     }
   }
 }

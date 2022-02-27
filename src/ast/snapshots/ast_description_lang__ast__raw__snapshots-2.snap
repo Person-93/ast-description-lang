@@ -1,6 +1,6 @@
 ---
 source: src/ast/raw.rs
-assertion_line: 446
+assertion_line: 456
 expression: "Ast::parse(&text)"
 input_file: examples/foo/example.ast
 
@@ -15,17 +15,29 @@ Ok(
                             "file",
                         ),
                         node: NodeDef {
-                            kind: Modified(
-                                NodeDef {
-                                    kind: Simple(
-                                        Ident(
-                                            "function",
+                            kind: Group {
+                                nodes: [
+                                    NodeDef {
+                                        kind: Modified(
+                                            NodeDef {
+                                                kind: Simple(
+                                                    Ident(
+                                                        "function",
+                                                    ),
+                                                ),
+                                                tag: None,
+                                            },
+                                            Repeat,
                                         ),
-                                    ),
-                                    tag: None,
-                                },
-                                Repeat,
-                            ),
+                                        tag: None,
+                                    },
+                                    NodeDef {
+                                        kind: End,
+                                        tag: None,
+                                    },
+                                ],
+                                inline: false,
+                            },
                             tag: None,
                         },
                     },
@@ -521,33 +533,47 @@ Ok(
                                 second: NodeDef {
                                     kind: Choice {
                                         first: NodeDef {
-                                            kind: Delimiter(
-                                                NodeDef {
-                                                    kind: Modified(
-                                                        NodeDef {
-                                                            kind: Simple(
-                                                                Ident(
-                                                                    "expr",
-                                                                ),
-                                                            ),
-                                                            tag: None,
-                                                        },
-                                                        Boxed,
-                                                    ),
-                                                    tag: None,
-                                                },
+                                            kind: Simple(
                                                 Ident(
-                                                    "paren",
+                                                    "fn_call",
                                                 ),
                                             ),
                                             tag: None,
                                         },
                                         second: NodeDef {
-                                            kind: Simple(
-                                                Ident(
-                                                    "ident",
-                                                ),
-                                            ),
+                                            kind: Choice {
+                                                first: NodeDef {
+                                                    kind: Delimiter(
+                                                        NodeDef {
+                                                            kind: Modified(
+                                                                NodeDef {
+                                                                    kind: Simple(
+                                                                        Ident(
+                                                                            "expr",
+                                                                        ),
+                                                                    ),
+                                                                    tag: None,
+                                                                },
+                                                                Boxed,
+                                                            ),
+                                                            tag: None,
+                                                        },
+                                                        Ident(
+                                                            "paren",
+                                                        ),
+                                                    ),
+                                                    tag: None,
+                                                },
+                                                second: NodeDef {
+                                                    kind: Simple(
+                                                        Ident(
+                                                            "ident",
+                                                        ),
+                                                    ),
+                                                    tag: None,
+                                                },
+                                                inline: false,
+                                            },
                                             tag: None,
                                         },
                                         inline: false,

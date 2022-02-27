@@ -1,6 +1,6 @@
 ---
 source: src/ast/collapsed/mod.rs
-assertion_line: 210
+assertion_line: 212
 expression: "Ast::parse(&text).unwrap().transform(&specs).unwrap().transform()"
 input_file: examples/foo/example.ast
 
@@ -14,13 +14,36 @@ Ok(
                         ident: Ident(
                             "file",
                         ),
-                        kind: Modified(
-                            Node(
-                                Ident(
-                                    "function",
+                        kind: Group(
+                            Group {
+                                members: [
+                                    Node {
+                                        ident: Ident(
+                                            "function",
+                                        ),
+                                        kind: Modified(
+                                            Node(
+                                                Ident(
+                                                    "function",
+                                                ),
+                                            ),
+                                            Repeat,
+                                        ),
+                                        tag: None,
+                                    },
+                                    Node {
+                                        ident: Ident(
+                                            "end",
+                                        ),
+                                        kind: End,
+                                        tag: None,
+                                    },
+                                ],
+                                kind: One(
+                                    0,
                                 ),
-                            ),
-                            Repeat,
+                                inline: false,
+                            },
                         ),
                         tag: None,
                     },
@@ -636,6 +659,17 @@ Ok(
                                         },
                                         Node {
                                             ident: Ident(
+                                                "fn_call",
+                                            ),
+                                            kind: Node(
+                                                Ident(
+                                                    "fn_call",
+                                                ),
+                                            ),
+                                            tag: None,
+                                        },
+                                        Node {
+                                            ident: Ident(
                                                 "expr",
                                             ),
                                             kind: Delimited(
@@ -679,7 +713,7 @@ Ok(
             false,
             false,
             false,
-            false,
+            true,
             true,
             true,
             true,

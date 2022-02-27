@@ -71,6 +71,7 @@ impl<'a> ParsedAst<'a> {
         .transform_node_kind(inner, hint)
         .map(|(inner, hint)| (NodeKind::Modified(Box::new(inner), *modifier), hint)),
       ParsedNodeKind::Todo => Ok((NodeKind::Todo, hint)),
+      ParsedNodeKind::End => Ok((NodeKind::End, hint)),
     }
   }
 
@@ -127,6 +128,7 @@ impl<'a> ParsedAst<'a> {
             },
             NodeKind::Delimited(inner, _) | NodeKind::Modified(inner, _) => get_index(inner, idx),
             NodeKind::Todo => None,
+            NodeKind::End => None,
           }
         }
       })
@@ -305,6 +307,7 @@ impl<'n> Nodes<'n> {
       NodeKind::Delimited(inner, _) => self.traverse_node(ident, inner, visited),
       NodeKind::Modified(inner, _) => self.traverse_node(ident, inner, visited),
       NodeKind::Todo => false,
+      NodeKind::End => false,
     }
   }
 }
@@ -387,6 +390,13 @@ impl<'n> TryFrom<(TaggedNodeKind<'n>, Option<Ident<'n>>)> for Node<'n> {
             tag: kind.tag,
           },
           Some(hint.unwrap_or(Ident("todo"))),
+        )),
+        NodeKind::End => Node::try_from((
+          TaggedNodeKind {
+            kind: NodeKind::End,
+            tag: kind.tag,
+          },
+          Some(hint.unwrap_or(Ident("end"))),
         )),
       },
     }

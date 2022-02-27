@@ -10,7 +10,7 @@ mod tokens;
 fn main() -> Result<()> {
   let json = std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/sample.json"))?;
   let iter = Token::lexer(&json).spanned();
-  let parsed = ast::parse::json()
+  let parsed = ast::parse::file()
     .parse(Stream::from_iter(json.len()..json.len() + 1, iter))
     .map_err(Error)?;
   println!("{parsed:#?}");

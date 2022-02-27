@@ -1,6 +1,6 @@
 ---
 source: src/ast/collapsed/mod.rs
-assertion_line: 210
+assertion_line: 212
 expression: "Ast::parse(&text).unwrap().transform(&specs).unwrap().transform()"
 input_file: examples/json/example.ast
 
@@ -9,6 +9,43 @@ Ok(
     Ast {
         nodes: NamedSet(
             {
+                Wrapper(
+                    Node {
+                        ident: Ident(
+                            "file",
+                        ),
+                        kind: Group(
+                            Group {
+                                members: [
+                                    Node {
+                                        ident: Ident(
+                                            "json",
+                                        ),
+                                        kind: Node(
+                                            Ident(
+                                                "json",
+                                            ),
+                                        ),
+                                        tag: None,
+                                    },
+                                    Node {
+                                        ident: Ident(
+                                            "end",
+                                        ),
+                                        kind: End,
+                                        tag: None,
+                                    },
+                                ],
+                                kind: One(
+                                    0,
+                                ),
+                                inline: false,
+                            },
+                        ),
+                        tag: None,
+                    },
+                    PhantomData,
+                ),
                 Wrapper(
                     Node {
                         ident: Ident(
@@ -224,6 +261,7 @@ Ok(
             },
         ),
         cyclic: [
+            false,
             true,
             true,
             true,

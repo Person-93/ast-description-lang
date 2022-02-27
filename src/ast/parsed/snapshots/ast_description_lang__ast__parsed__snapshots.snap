@@ -1,6 +1,6 @@
 ---
 source: src/ast/parsed/mod.rs
-assertion_line: 169
+assertion_line: 172
 expression: "Ast::parse(&text).unwrap().transform(&specs)"
 input_file: examples/json/example.ast
 
@@ -9,6 +9,32 @@ Ok(
     Ast(
         NamedSet(
             {
+                Wrapper(
+                    Node {
+                        ident: Ident(
+                            "file",
+                        ),
+                        kind: Group {
+                            nodes: [
+                                TaggedNodeKind {
+                                    kind: Node(
+                                        Ident(
+                                            "json",
+                                        ),
+                                    ),
+                                    tag: None,
+                                },
+                                TaggedNodeKind {
+                                    kind: End,
+                                    tag: None,
+                                },
+                            ],
+                            inline: false,
+                        },
+                        tag: None,
+                    },
+                    PhantomData,
+                ),
                 Wrapper(
                     Node {
                         ident: Ident(

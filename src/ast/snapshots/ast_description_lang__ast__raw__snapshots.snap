@@ -1,6 +1,6 @@
 ---
 source: src/ast/raw.rs
-assertion_line: 446
+assertion_line: 456
 expression: "Ast::parse(&text)"
 input_file: examples/json/example.ast
 
@@ -9,6 +9,34 @@ Ok(
     Ast(
         NamedSet(
             {
+                Wrapper(
+                    Entry {
+                        ident: Ident(
+                            "file",
+                        ),
+                        node: NodeDef {
+                            kind: Group {
+                                nodes: [
+                                    NodeDef {
+                                        kind: Simple(
+                                            Ident(
+                                                "json",
+                                            ),
+                                        ),
+                                        tag: None,
+                                    },
+                                    NodeDef {
+                                        kind: End,
+                                        tag: None,
+                                    },
+                                ],
+                                inline: false,
+                            },
+                            tag: None,
+                        },
+                    },
+                    PhantomData,
+                ),
                 Wrapper(
                     Entry {
                         ident: Ident(

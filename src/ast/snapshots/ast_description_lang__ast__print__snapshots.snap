@@ -1,6 +1,6 @@
 ---
 source: src/ast/print.rs
-assertion_line: 905
+assertion_line: 917
 expression: printed
 input_file: examples/json/example.ast
 
@@ -30,6 +30,9 @@ pub mod parse {
   use crate::tokens::{parse::*, Token};
   use chumsky::prelude::*;
   type Error = ::chumsky::error::Simple<Token>;
+  pub fn file() -> impl Parser<Token, Json, Error = Error> {
+    json().then(end()).map(|(_0, _1)| _0)
+  }
   pub fn json() -> impl Parser<Token, Json, Error = Error> {
     RECURSIVE.with(|parsers| parsers.borrow().0.clone())
   }

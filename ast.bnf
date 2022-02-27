@@ -1,4 +1,5 @@
-entry ::= <node_type> <whitespace> "=" <whitespace> <tagged_node_def>
+entry ::= <node_type> <whitespace> "=" <whitespace> <tagged_node_def> |
+          <entry> <whitespace> "EOF"
 node_type ::= <identifier>
 tagged_node_def ::= <node_def> | <node_def> ":" <identifier>
 node_def ::= <identifier> |

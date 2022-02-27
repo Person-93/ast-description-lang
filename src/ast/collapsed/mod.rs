@@ -39,6 +39,7 @@ pub(super) enum NodeKind<'n> {
   Delimited(Box<NodeKind<'n>>, Ident<'n>),
   Modified(Box<NodeKind<'n>>, Modifier),
   Todo,
+  End,
 }
 
 #[derive(Clone, Debug)]
@@ -183,6 +184,7 @@ impl Display for NodeKind<'_> {
       NodeKind::Delimited(inner, delimiter) => write!(f, "delim[{delimiter}]<{inner}>"),
       NodeKind::Modified(inner, modifier) => write!(f, "{inner}{modifier}"),
       NodeKind::Todo => write!(f, "!todo"),
+      NodeKind::End => write!(f, "EOF"),
     }
   }
 }

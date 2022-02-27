@@ -39,6 +39,7 @@ pub(super) enum NodeKindDef<'a> {
     inline: bool,
   },
   Todo,
+  End,
 }
 
 impl<'a> DerefMut for Ast<'a> {
@@ -153,6 +154,14 @@ impl NodeDef<'_> {
           },
           tag: parse_tag(lexer)?,
         });
+      }
+
+      if lexer.parse_literal("EOF") {
+        nodes.push(NodeDef {
+          kind: NodeKindDef::End,
+          tag: None,
+        });
+        break;
       }
 
       let mut node = if lexer.parse_literal("(") {
@@ -366,6 +375,7 @@ impl Display for NodeKindDef<'_> {
         Ok(())
       }
       NodeKindDef::Todo => write!(f, "!todo"),
+      NodeKindDef::End => write!(f, "EOF"),
     }
   }
 }
