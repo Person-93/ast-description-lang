@@ -1,0 +1,73 @@
+---
+source: tests/e2e.rs
+assertion_line: 67
+expression: "std::str::from_utf8(&output.stdout).unwrap()"
+input_file: examples/json
+
+---
+Object(
+    [
+        Member {
+            str_lit: StrLit(
+                "\"foo\"",
+            ),
+            json: StrLit(
+                StrLit(
+                    "\"bar\"",
+                ),
+            ),
+        },
+        Member {
+            str_lit: StrLit(
+                "\"obj\"",
+            ),
+            json: Object(
+                [
+                    Member {
+                        str_lit: StrLit(
+                            "\"answer\"",
+                        ),
+                        json: NumLit(
+                            NumLit(
+                                42,
+                                None,
+                            ),
+                        ),
+                    },
+                ],
+            ),
+        },
+        Member {
+            str_lit: StrLit(
+                "\"arr\"",
+            ),
+            json: Array(
+                [
+                    NumLit(
+                        NumLit(
+                            2,
+                            None,
+                        ),
+                    ),
+                    NumLit(
+                        NumLit(
+                            3,
+                            None,
+                        ),
+                    ),
+                    NumLit(
+                        NumLit(
+                            4,
+                            None,
+                        ),
+                    ),
+                    StrLit(
+                        StrLit(
+                            "\"hi\"",
+                        ),
+                    ),
+                ],
+            ),
+        },
+    ],
+)

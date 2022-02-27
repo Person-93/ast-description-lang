@@ -1,0 +1,137 @@
+---
+source: tests/e2e.rs
+assertion_line: 67
+expression: "std::str::from_utf8(&output.stdout).unwrap()"
+input_file: examples/foo
+
+---
+[
+    Function {
+        ident: Ident(
+            "main",
+        ),
+        params: [],
+        declaration: [
+            Declaration {
+                ident: Ident(
+                    "five",
+                ),
+                value: Sum {
+                    leading: Product {
+                        leading: NumLit(
+                            NumLit(
+                                5,
+                                None,
+                            ),
+                        ),
+                        trailing: [],
+                    },
+                    trailing: [],
+                },
+            },
+            Declaration {
+                ident: Ident(
+                    "eight",
+                ),
+                value: Sum {
+                    leading: Product {
+                        leading: NumLit(
+                            NumLit(
+                                3,
+                                None,
+                            ),
+                        ),
+                        trailing: [],
+                    },
+                    trailing: [
+                        TrailingProduct {
+                            add_or_sub: Plus,
+                            product: Product {
+                                leading: Ident(
+                                    Ident(
+                                        "five",
+                                    ),
+                                ),
+                                trailing: [],
+                            },
+                        },
+                    ],
+                },
+            },
+        ],
+        body: Sum {
+            leading: Product {
+                leading: FnCall(
+                    FnCall {
+                        ident: Ident(
+                            "add",
+                        ),
+                        args: [
+                            Sum {
+                                leading: Product {
+                                    leading: Ident(
+                                        Ident(
+                                            "five",
+                                        ),
+                                    ),
+                                    trailing: [],
+                                },
+                                trailing: [],
+                            },
+                            Sum {
+                                leading: Product {
+                                    leading: Ident(
+                                        Ident(
+                                            "eight",
+                                        ),
+                                    ),
+                                    trailing: [],
+                                },
+                                trailing: [],
+                            },
+                        ],
+                    },
+                ),
+                trailing: [],
+            },
+            trailing: [],
+        },
+    },
+    Function {
+        ident: Ident(
+            "add",
+        ),
+        params: [
+            Ident(
+                "x",
+            ),
+            Ident(
+                "y",
+            ),
+        ],
+        declaration: [],
+        body: Sum {
+            leading: Product {
+                leading: Ident(
+                    Ident(
+                        "x",
+                    ),
+                ),
+                trailing: [],
+            },
+            trailing: [
+                TrailingProduct {
+                    add_or_sub: Plus,
+                    product: Product {
+                        leading: Ident(
+                            Ident(
+                                "y",
+                            ),
+                        ),
+                        trailing: [],
+                    },
+                },
+            ],
+        },
+    },
+]
