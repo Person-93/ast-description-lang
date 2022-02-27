@@ -10,4 +10,4 @@ add_or_sub = plus | minus
 trailing_unary = mult_or_div unary
 mult_or_div = mult | div
 unary = minus* atom
-atom = num_lit | delim[paren]<expr~> | ident
+atom = num_lit | fn_call | delim[paren]<expr~> | ident
