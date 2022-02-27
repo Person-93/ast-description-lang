@@ -1,27 +1,27 @@
 ---
 source: src/ast/print.rs
-assertion_line: 911
+assertion_line: 905
 expression: printed
 input_file: examples/foo/example.ast
 
 ---
 #![allow(dead_code)]
-use crate::tokens;
+use crate::tokens::*;
 #[derive(Clone, Debug)]
 pub struct Function {
-  pub ident: tokens::Ident,
-  pub params: Vec<tokens::Ident>,
+  pub ident: Ident,
+  pub params: Vec<Ident>,
   pub declaration: Vec<Declaration>,
   pub body: Sum,
 }
 #[derive(Clone, Debug)]
 pub struct Declaration {
-  pub ident: tokens::Ident,
+  pub ident: Ident,
   pub value: Sum,
 }
 #[derive(Clone, Debug)]
 pub struct FnCall {
-  pub ident: tokens::Ident,
+  pub ident: Ident,
   pub args: Vec<Sum>,
 }
 #[derive(Clone, Debug)]
@@ -56,15 +56,15 @@ pub enum MultOrDiv {
 }
 #[derive(Clone, Debug)]
 pub enum Atom {
-  NumLit(tokens::NumLit),
+  NumLit(NumLit),
   Expr(Box<Sum>),
-  Ident(tokens::Ident),
+  Ident(Ident),
 }
 pub mod parse {
   use super::*;
+  use crate::tokens::{parse::*, Token};
   use chumsky::prelude::*;
-  use tokens::{parse::*, Token};
-  type Error = ::chumsky::error::Simple<tokens::Token>;
+  type Error = ::chumsky::error::Simple<Token>;
   pub fn file() -> impl Parser<Token, Vec<Function>, Error = Error> {
     function().repeated()
   }

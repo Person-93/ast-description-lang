@@ -59,7 +59,7 @@ impl<'i> Ident<'i> {
 impl Default for Config<'_> {
   fn default() -> Self {
     Self {
-      error: "::chumsky::error::Simple<tokens::Token>",
+      error: "::chumsky::error::Simple<Token>",
       tokens_mod: "crate::tokens",
     }
   }

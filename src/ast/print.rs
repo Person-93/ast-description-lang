@@ -64,7 +64,7 @@ impl Ast<'_> {
             NodeKind::StaticToken(_) => quote! {},
             NodeKind::DynamicToken(ident) => {
               let ty = ident.as_type();
-              quote! { (tokens::#ty) }
+              quote! { (#ty) }
             }
             NodeKind::Group(Group {
               members,
@@ -155,13 +155,13 @@ impl Ast<'_> {
     quote! {
       #![allow(dead_code)]
 
-      use #tokens_mod;
+      use #tokens_mod::*;
       #(#nodes)*
 
       pub mod parse {
         use super::*;
         use chumsky::prelude::*;
-        use tokens::{parse::*, Token};
+        use #tokens_mod::{parse::*, Token};
 
         type Error = #error;
 
@@ -181,10 +181,7 @@ impl Ast<'_> {
         }
       },
       NodeKind::StaticToken(_) => None,
-      NodeKind::DynamicToken(ty) => {
-        let ty = ty.as_type();
-        Some(quote! { tokens::#ty })
-      }
+      NodeKind::DynamicToken(ty) => Some(ty.as_type().to_token_stream()),
       NodeKind::Group(Group {
         members,
         kind,
@@ -235,10 +232,7 @@ impl Ast<'_> {
               .unwrap_or_else(|| child.ident.as_type().to_token_stream())
           }
           NodeKind::StaticToken(_) => quote! { usize },
-          NodeKind::DynamicToken(ident) => {
-            let ty = ident.as_type();
-            quote! { tokens::#ty }
-          }
+          NodeKind::DynamicToken(ident) => ident.as_type().to_token_stream(),
           NodeKind::Group(Group {
             members,
             kind,

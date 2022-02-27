@@ -1,23 +1,23 @@
 ---
 source: src/ast/print.rs
-assertion_line: 911
+assertion_line: 905
 expression: printed
 input_file: examples/json/example.ast
 
 ---
 #![allow(dead_code)]
-use crate::tokens;
+use crate::tokens::*;
 #[derive(Clone, Debug)]
 pub enum Json {
   Object(Vec<Member>),
   Array(Vec<Json>),
-  NumLit(tokens::NumLit),
-  StrLit(tokens::StrLit),
+  NumLit(NumLit),
+  StrLit(StrLit),
   Bool(Bool),
 }
 #[derive(Clone, Debug)]
 pub struct Member {
-  pub str_lit: tokens::StrLit,
+  pub str_lit: StrLit,
   pub json: Json,
 }
 #[derive(Clone, Debug)]
@@ -27,9 +27,9 @@ pub enum Bool {
 }
 pub mod parse {
   use super::*;
+  use crate::tokens::{parse::*, Token};
   use chumsky::prelude::*;
-  use tokens::{parse::*, Token};
-  type Error = ::chumsky::error::Simple<tokens::Token>;
+  type Error = ::chumsky::error::Simple<Token>;
   pub fn json() -> impl Parser<Token, Json, Error = Error> {
     RECURSIVE.with(|parsers| parsers.borrow().0.clone())
   }
