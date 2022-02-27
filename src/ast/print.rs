@@ -291,45 +291,7 @@ impl Ast<'_> {
 
   fn print_parser(&self, node: &Node<'_>, specs: &Specs<'_>) -> TokenStream {
     let ident = node.ident;
-    let ty: TokenStream =
-      match &node.kind {
-        NodeKind::Node(child) => self.get(*child).unwrap().ident.as_type().to_token_stream(),
-        NodeKind::StaticToken(_) => quote! { () },
-        NodeKind::DynamicToken(ident) => ident.as_type().to_token_stream(),
-        NodeKind::Group(Group {
-          members: _,
-          kind,
-          inline: _,
-        }) => match kind {
-          GroupKind::Zero => quote! { () },
-          GroupKind::One(_) | GroupKind::Many(_) => {
-            self.print_as_type(&node.kind, Some(ident)).unwrap()
-          }
-        },
-        NodeKind::Choice(Choice {
-          kind: ChoiceKind::Regular(_),
-          inline: _,
-        }) => ident.as_type().to_token_stream(),
-        NodeKind::Choice(Choice {
-          kind: ChoiceKind::Option {
-            primary,
-            secondary: _,
-          },
-          inline: _,
-        }) => {
-          let primary = primary.ident.as_type();
-          quote! { Option<#primary> }
-        }
-        NodeKind::Delimited(inner, _) => self
-          .print_as_type(inner, Some(node.ident))
-          .unwrap_or_else(|| {
-            let message = format!("failed to get type for {ident}");
-            quote! { compile_error!(#message) }
-          }),
-        NodeKind::Modified(inner, modifier) => self.print_modified_type(inner, None, *modifier),
-        NodeKind::Todo => quote! { () },
-        NodeKind::End => quote! { () },
-      };
+    let ty = self.print_as_type(&node.kind, Some(node.ident)).unwrap();
     let body = if self.is_node_cyclic(node) {
       let idx = self.index_of(node.ident).unwrap();
       let idx = self.cyclic[0..=idx].iter().filter(|b| **b).count() - 1;
