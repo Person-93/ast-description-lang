@@ -55,13 +55,7 @@ jobs:
 
     - uses: actions-rs/cargo@v1
       with:
-        command: install
-        args: cargo-feature-matrix
-
-    - uses: actions-rs/cargo@v1
-      with:
-        command: feature-matrix
-        args: test
+        command: test
 
   docs:
     name: Docs
@@ -84,7 +78,7 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: doc
-        args: --no-deps --document-private-items --workspace
+        args: --no-deps --document-private-items
 
   rustfmt:
     runs-on: ubuntu-latest
