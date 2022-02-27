@@ -25,7 +25,8 @@ fn main() -> Result<()> {
       "example-{} exited non zero",
       path.file_name().unwrap().to_str().unwrap()
     );
-    with_settings!({input_file => Some(path)}, {
+    let name = String::from(path.file_name().unwrap().to_str().unwrap());
+    with_settings!({input_file => Some(path), snapshot_suffix => name}, {
       assert_snapshot!(std::str::from_utf8(&output.stdout).unwrap())
     });
   }
