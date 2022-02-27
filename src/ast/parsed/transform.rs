@@ -61,7 +61,7 @@ fn node_from_def(node_def_kind: ValidNodeKind) -> NodeKind {
       NodeKind::Delimited(Box::new(node_from_def(inner.kind)), delimiter)
     }
     ValidNodeKind::Todo => NodeKind::Todo,
-    ValidNodeKind::End => NodeKind::End
+    ValidNodeKind::End => NodeKind::End,
   }
 }
 
