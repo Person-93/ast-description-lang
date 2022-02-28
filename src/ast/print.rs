@@ -27,9 +27,9 @@ impl Ast<'_> {
         kind,
         inline: _,
       }) => match kind {
-        GroupKind::Zero | GroupKind::One(_) => None,
+        GroupKind::One(_) => None,
         GroupKind::Many(indices) => {
-          let members = indices
+          let mut members = indices
             .iter()
             .copied()
             .map(|idx| &members[idx])
@@ -38,15 +38,21 @@ impl Ast<'_> {
               let ident = node.tag.unwrap_or(node.ident);
               let ty = self.print_as_type(&node.kind, Some(node.ident));
               quote! { pub #ident: #ty }
-            });
+            })
+            .peekable();
 
-          let ident = node.ident.as_type();
-          Some(quote! {
-            #[derive(Clone, Debug)]
-            pub struct #ident { #(#members),* }
-          })
+          if members.peek().is_none() {
+            None
+          } else {
+            let ident = node.ident.as_type();
+            Some(quote! {
+              #[derive(Clone, Debug)]
+              pub struct #ident { #(#members),* }
+            })
+          }
         }
       },
+      NodeKind::SubGroup(_) => unreachable!("top level sub-group"),
       NodeKind::Choice(Choice {
         kind: ChoiceKind::Regular(choices),
         inline: _,
@@ -54,58 +60,11 @@ impl Ast<'_> {
         let variants = choices.iter().map(|choice| {
           let name = choice.ident.to_string().to_pascal_case();
           let name = Ident(&name);
-          let ty = self.print_as_type(&choice.kind, Some(choice.ident));
-          let body = match &choice.kind {
-            NodeKind::Node(child) => {
-              let child = self.get(*child).unwrap();
-              if self.is_node_kind_zero_sized(&child.kind) {
-                quote! {}
-              } else {
-                quote! { (#ty) }
-              }
-            }
-            NodeKind::StaticToken(_) => quote! {},
-            NodeKind::DynamicToken(ident) => {
-              let ty = ident.as_type();
-              quote! { (#ty) }
-            }
-            NodeKind::Group(Group {
-              members,
-              kind,
-              inline: _,
-            }) => match kind {
-              GroupKind::Zero => quote! {},
-              GroupKind::One(idx) => {
-                let node = &members[*idx];
-                self.print_as_type(&node.kind, Some(node.ident))
-              }
-              GroupKind::Many(_) => quote! { (#ty) },
-            },
-            NodeKind::Choice(Choice {
-              kind: ChoiceKind::Regular(_),
-              inline: _,
-            }) => quote! { (#ty) },
-            NodeKind::Choice(Choice {
-              kind:
-                ChoiceKind::Option {
-                  primary,
-                  secondary: _,
-                },
-              inline: _,
-            }) => {
-              let ty = self.print_as_type(&primary.kind, Some(primary.ident));
-              quote! { (Option<#ty>) }
-            }
-            NodeKind::Delimited(inner, _) => {
-              let ty = self.print_as_type(inner, None);
-              quote! { (#ty) }
-            }
-            NodeKind::Modified(inner, modifier) => {
-              let ty = self.print_modified_type(&**inner, None, *modifier);
-              quote! { (#ty) }
-            }
-            NodeKind::Todo => quote! { () },
-            NodeKind::End => quote! {},
+          let body = if self.is_node_kind_zero_sized(&choice.kind) {
+            quote! {}
+          } else {
+            let ty = self.print_as_type(&choice.kind, Some(choice.ident));
+            quote! { (#ty) }
           };
           quote! { #name #body }
         });
@@ -123,7 +82,7 @@ impl Ast<'_> {
           kind,
           inline: _,
         }) => match kind {
-          GroupKind::Zero | GroupKind::One(_) => None,
+          GroupKind::One(_) => None,
           GroupKind::Many(indices) => {
             let members = indices
               .iter()
@@ -143,7 +102,8 @@ impl Ast<'_> {
             })
           }
         },
-        NodeKind::Choice(_)
+        NodeKind::SubGroup(_)
+        | NodeKind::Choice(_)
         | NodeKind::Delimited(_, _)
         | NodeKind::Modified(_, _)
         | NodeKind::Todo => None,
@@ -186,21 +146,20 @@ impl Ast<'_> {
           quote! { compile_error!(#message) }
         }
       },
-      NodeKind::StaticToken(ident) | NodeKind::DynamicToken(ident) => {
-        ident.as_type().to_token_stream()
-      }
+      NodeKind::StaticToken(_) => unreachable!("tried to print type of static token"),
+      NodeKind::DynamicToken(ident) => ident.as_type().to_token_stream(),
       NodeKind::Group(Group {
         members,
         kind,
         inline: _,
       }) => match kind {
-        GroupKind::Zero => quote! { () },
         GroupKind::One(idx) => {
           let node = &members[*idx];
           self.print_as_type(&node.kind, Some(node.ident))
         }
         GroupKind::Many(_) => hint.unwrap().as_type().to_token_stream(),
       },
+      NodeKind::SubGroup(_) => quote! { () },
       NodeKind::Choice(Choice {
         kind: ChoiceKind::Regular(_),
         inline: _,
@@ -229,51 +188,12 @@ impl Ast<'_> {
   ) -> TokenStream {
     match modifier {
       Modifier::Repeat | Modifier::Csv | Modifier::OnePlus | Modifier::CsvOnePlus => {
-        let ty = match kind {
-          NodeKind::Node(ident) => {
-            let child = self.get(*ident).unwrap();
-            self.print_as_type(&child.kind, Some(*ident))
-          }
-          NodeKind::StaticToken(_) => quote! { usize },
-          NodeKind::DynamicToken(ident) => ident.as_type().to_token_stream(),
-          NodeKind::Group(Group {
-            members,
-            kind,
-            inline: _,
-          }) => match kind {
-            GroupKind::Zero | GroupKind::Many(_) => unreachable!(),
-            GroupKind::One(idx) => {
-              let node = &members[*idx];
-              self.print_as_type(&node.kind, Some(node.ident))
-            }
-          },
-          NodeKind::Choice(Choice {
-            kind: ChoiceKind::Regular(_),
-            inline: _,
-          }) => match hint {
-            Some(ident) => ident.as_type().to_token_stream(),
-            None => todo!(),
-          },
-          NodeKind::Choice(Choice {
-            kind:
-              ChoiceKind::Option {
-                primary,
-                secondary: _,
-              },
-            inline: _,
-          }) => {
-            let ty = self.print_as_type(&primary.kind, Some(primary.ident));
-            quote! { Option<#ty> }
-          }
-          NodeKind::Delimited(..) => match hint {
-            Some(ident) => ident.as_type().to_token_stream(),
-            None => todo!(),
-          },
-          NodeKind::Modified(_, _) => unreachable!(),
-          NodeKind::Todo => quote! { () },
-          NodeKind::End => unreachable!(),
-        };
-        quote! { Vec<#ty> }
+        if self.is_node_kind_zero_sized(kind) {
+          quote! { usize }
+        } else {
+          let ty = self.print_as_type(kind, hint);
+          quote! { Vec<#ty> }
+        }
       }
       Modifier::Optional => {
         if self.is_node_kind_zero_sized(kind) {
@@ -292,7 +212,11 @@ impl Ast<'_> {
 
   fn print_parser(&self, node: &Node<'_>, specs: &Specs<'_>) -> TokenStream {
     let ident = node.ident;
-    let ty = self.print_as_type(&node.kind, Some(node.ident));
+    let ty = if self.is_node_kind_zero_sized(&node.kind) {
+      quote! { () }
+    } else {
+      self.print_as_type(&node.kind, Some(node.ident))
+    };
     let body = if self.is_node_cyclic(node) {
       let idx = self.index_of(node.ident).unwrap();
       let idx = self.cyclic[0..=idx].iter().filter(|b| **b).count() - 1;
@@ -315,12 +239,24 @@ impl Ast<'_> {
   ) -> TokenStream {
     match node_kind {
       NodeKind::Node(child) => quote! { #child() },
-      NodeKind::StaticToken(ident) => quote! { #ident() },
-      NodeKind::DynamicToken(ident) => {
-        let ty = ident.as_type();
-        quote! { select! { Token::#ty(item) => item } }
-      }
+      NodeKind::StaticToken(ident) | NodeKind::DynamicToken(ident) => quote! { #ident() },
       NodeKind::Group(group) => self.print_group_parser(group, hint, specs),
+      NodeKind::SubGroup(members) => {
+        let mut members = members.iter();
+        let first = self.print_sub_parser(members.next().unwrap(), specs, false);
+        let members: Vec<_> = members
+          .map(|node| {
+            let parser = self.print_sub_parser(node, specs, false);
+            quote! { .then(#parser) }
+          })
+          .collect();
+
+        if members.is_empty() {
+          first
+        } else {
+          quote! { #first #(#members)*.ignored() }
+        }
+      }
       NodeKind::Choice(Choice {
         kind: ChoiceKind::Regular(choices),
         inline: _,
@@ -377,6 +313,7 @@ impl Ast<'_> {
           self.print_group_parser(group, None, specs)
         }
         NodeKind::Group(Group { inline: false, .. }) => parser,
+        NodeKind::SubGroup(_) => self.print_parser_body(&node.kind, None, specs),
         NodeKind::Choice(Choice { inline: true, .. }) => {
           self.print_parser_body(&node.kind, None, specs)
         }
@@ -411,22 +348,6 @@ impl Ast<'_> {
     specs: &Specs<'_>,
   ) -> TokenStream {
     match kind {
-      GroupKind::Zero => {
-        let mut members = members.iter();
-        let first = self.print_sub_parser(members.next().unwrap(), specs, *inline);
-        let members: Vec<_> = members
-          .map(|node| {
-            let parser = self.print_sub_parser(node, specs, *inline);
-            quote! { .then(#parser) }
-          })
-          .collect();
-
-        if members.is_empty() {
-          first
-        } else {
-          quote! { #first #(#members)*.ignored() }
-        }
-      }
       GroupKind::One(idx) => {
         let binding = print_tuple_binding(members.len());
         let members = self.print_group_members(members, specs, *inline);
@@ -482,6 +403,7 @@ impl Ast<'_> {
       NodeKind::StaticToken(_)
       | NodeKind::DynamicToken(_)
       | NodeKind::Delimited(_, _)
+      | NodeKind::SubGroup(_)
       | NodeKind::Modified(_, _)
       | NodeKind::Todo
       | NodeKind::End => false,
@@ -579,7 +501,6 @@ impl Ast<'_> {
         kind,
         inline: _,
       }) => match kind {
-        GroupKind::Zero => self.print_parser_body(node_kind, None, specs),
         GroupKind::One(idx) => {
           let binding = print_tuple_binding(members.len());
 
@@ -618,6 +539,7 @@ impl Ast<'_> {
           quote! { #(#members)*.map(|#binding| #ty { #member_init }) }
         }
       },
+      NodeKind::SubGroup(_) => self.print_parser_body(node_kind, None, specs),
       NodeKind::Choice(Choice {
         kind: ChoiceKind::Regular(choices),
         inline: _,
@@ -687,10 +609,10 @@ impl Ast<'_> {
         kind,
         inline: _,
       }) => match kind {
-        GroupKind::Zero => quote! { |_| #ty::#variant },
         GroupKind::One(_) => quote! { #ty::#variant },
         GroupKind::Many(_) => quote! { #ty::#variant },
       },
+      NodeKind::SubGroup(_) => quote! { |_| #ty::#variant },
       NodeKind::Choice(_) => quote! { #ty::#variant },
       NodeKind::Delimited(_, _) => quote! { #ty::#variant },
       NodeKind::Modified(_, _) => quote! { #ty::#variant },
@@ -745,7 +667,8 @@ impl Ast<'_> {
       NodeKind::Node(child) => self.is_node_kind_zero_sized(&self.get(*child).unwrap().kind),
       NodeKind::StaticToken(_) => true,
       NodeKind::DynamicToken(_) => false,
-      NodeKind::Group(Group { kind, .. }) => matches!(kind, GroupKind::Zero),
+      NodeKind::Group(_) => false,
+      NodeKind::SubGroup(_) => true,
       NodeKind::Choice(_) => false,
       NodeKind::Delimited(inner, _) => self.is_node_kind_zero_sized(inner),
       NodeKind::Modified(_, _) => false,

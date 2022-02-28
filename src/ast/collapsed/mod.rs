@@ -35,6 +35,11 @@ pub(super) enum NodeKind<'n> {
   StaticToken(Ident<'n>),
   DynamicToken(Ident<'n>),
   Group(Group<'n>),
+  /// Represents a parenthesized group that is zero-sized.
+  ///
+  /// It needs special handling, because unlike other groups,
+  /// zero-sized groups are allowed to be anonymous.
+  SubGroup(Vec<Node<'n>>),
   Choice(Choice<'n>),
   Delimited(Box<NodeKind<'n>>, Ident<'n>),
   Modified(Box<NodeKind<'n>>, Modifier),
@@ -51,7 +56,6 @@ pub(super) struct Group<'g> {
 
 #[derive(Clone, Debug)]
 pub(super) enum GroupKind {
-  Zero,
   One(usize),
   Many(Vec<usize>),
 }
@@ -153,6 +157,15 @@ impl Display for NodeKind<'_> {
           write!(f, ")")?;
         }
 
+        Ok(())
+      }
+      NodeKind::SubGroup(nodes) => {
+        let mut nodes = nodes.iter();
+        write!(f, "({}", nodes.next().unwrap())?;
+        for node in nodes {
+          write!(f, ", {node}")?;
+        }
+        write!(f, ")")?;
         Ok(())
       }
       NodeKind::Choice(Choice {

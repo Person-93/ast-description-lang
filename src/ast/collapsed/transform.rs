@@ -81,6 +81,12 @@ impl<'a> ParsedAst<'a> {
     inline: bool,
     hint: Option<Ident<'a>>,
   ) -> Result<(NodeKind<'a>, Option<Ident<'a>>), Error> {
+    let indices: Vec<_> = nodes
+      .iter()
+      .enumerate()
+      .filter_map(|(idx, kind)| (!self.is_zero_sized(&kind.kind)).then(|| idx))
+      .collect();
+
     let nodes: Vec<_> = nodes
       .iter()
       .map(|child| {
@@ -108,53 +114,29 @@ impl<'a> ParsedAst<'a> {
         ))
       })?;
 
-    let indices: Vec<_> = nodes
-      .iter()
-      .enumerate()
-      .filter_map(|(idx, (kind, _))| {
-        return get_index(&kind.kind, idx);
-        fn get_index(kind: &NodeKind, idx: usize) -> Option<usize> {
-          match kind {
-            NodeKind::StaticToken(_) => None,
-            NodeKind::Node(_) | NodeKind::DynamicToken(_) | NodeKind::Choice(_) => Some(idx),
-            NodeKind::Group(Group {
-              kind,
-              members: _,
-              inline: _,
-            }) => match kind {
-              GroupKind::Zero => None,
-              GroupKind::One(_) => Some(idx),
-              GroupKind::Many(..) => Some(idx),
-            },
-            NodeKind::Delimited(inner, _) | NodeKind::Modified(inner, _) => get_index(inner, idx),
-            NodeKind::Todo => None,
-            NodeKind::End => None,
-          }
-        }
-      })
-      .collect();
+    let make_nodes = |nodes: Vec<(TaggedNodeKind<'a>, Option<Ident<'a>>)>| {
+      nodes
+        .into_iter()
+        .map(|(kind, hint)| match hint {
+          Some(ident) => Ok(Node {
+            ident,
+            kind: kind.kind,
+            tag: kind.tag,
+          }),
+          None => Node::try_from((kind, hint)),
+        })
+        .collect::<Result<_, _>>()
+    };
 
     let (kind, generated_hint) = match indices.len() {
-      0 => (GroupKind::Zero, None),
+      0 => return Ok((NodeKind::SubGroup(make_nodes(nodes)?), None)),
       1 => (GroupKind::One(indices[0]), nodes[indices[0]].1),
       _ => (GroupKind::Many(indices), None),
     };
 
     Ok((
       NodeKind::Group(Group {
-        members: nodes
-          .into_iter()
-          .map(|(kind, hint)| {
-            Ok(match hint {
-              Some(ident) => Node {
-                ident,
-                kind: kind.kind,
-                tag: kind.tag,
-              },
-              None => Node::try_from((kind, None))?,
-            })
-          })
-          .collect::<Result<_, Error>>()?,
+        members: make_nodes(nodes)?,
         kind,
         inline,
       }),
@@ -243,6 +225,22 @@ impl<'a> ParsedAst<'a> {
       .transform_node_kind(inner, hint)
       .map(|(inner, hint)| (NodeKind::Delimited(Box::new(inner), delimiter), hint))
   }
+
+  #[must_use]
+  fn is_zero_sized(&self, kind: &ParsedNodeKind<'_>) -> bool {
+    match kind {
+      ParsedNodeKind::Node(child) => self.is_zero_sized(&self.get(*child).unwrap().kind),
+      ParsedNodeKind::StaticToken(_) => true,
+      ParsedNodeKind::DynamicToken(_) => false,
+      ParsedNodeKind::Group { nodes, inline: _ } => {
+        nodes.iter().all(|node| self.is_zero_sized(&node.kind))
+      }
+      ParsedNodeKind::Choice { .. } => false,
+      ParsedNodeKind::Delimited(inner, _) => self.is_zero_sized(inner),
+      ParsedNodeKind::Modified(_, _) => false,
+      ParsedNodeKind::Todo | ParsedNodeKind::End => true,
+    }
+  }
 }
 
 struct Nodes<'n>(NamedSet<'n, Node<'n>>);
@@ -292,7 +290,8 @@ impl<'n> Nodes<'n> {
         members: nodes,
         kind: _,
         inline: _,
-      }) => nodes.iter().any(delegate_to_child),
+      })
+      | NodeKind::SubGroup(nodes) => nodes.iter().any(delegate_to_child),
       NodeKind::Choice(Choice {
         kind: ChoiceKind::Option {
           primary,
@@ -337,7 +336,6 @@ impl<'n> TryFrom<(TaggedNodeKind<'n>, Option<Ident<'n>>)> for Node<'n> {
           Ok(kind.add_name(ident))
         }
         NodeKind::Group(ref group) => match &group.kind {
-          GroupKind::Zero => Err(MissingName::new("failed to name zero sized group", &kind)),
           GroupKind::One(idx) => Ok(Node {
             ident: group.members.get(*idx).unwrap().ident,
             kind: kind.kind,
@@ -345,6 +343,7 @@ impl<'n> TryFrom<(TaggedNodeKind<'n>, Option<Ident<'n>>)> for Node<'n> {
           }),
           GroupKind::Many(_) => Err(MissingName::new("failed to name group", &kind)),
         },
+        NodeKind::SubGroup(_) => Err(MissingName::new("failed to name sub-group", &kind)),
         NodeKind::Choice(Choice {
           kind: ChoiceKind::Regular(_),
           inline: _,
@@ -377,7 +376,7 @@ impl<'n> TryFrom<(TaggedNodeKind<'n>, Option<Ident<'n>>)> for Node<'n> {
             kind: *inner,
             tag: None,
           },
-          hint,
+          hint.or(kind.tag),
         ))
         .map(|node| Node {
           ident: node.ident,

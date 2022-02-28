@@ -1,6 +1,6 @@
 ---
 source: src/ast/collapsed/mod.rs
-assertion_line: 212
+assertion_line: 225
 expression: "Ast::parse(&text).unwrap().transform(&specs).unwrap().transform()"
 input_file: examples/foo/example.ast
 
@@ -81,7 +81,7 @@ Ok(
                                     },
                                     Node {
                                         ident: Ident(
-                                            "ident",
+                                            "params",
                                         ),
                                         kind: Modified(
                                             DynamicToken(
@@ -340,7 +340,7 @@ Ok(
                                     },
                                     Node {
                                         ident: Ident(
-                                            "trailing_product",
+                                            "trailing",
                                         ),
                                         kind: Modified(
                                             Node(
@@ -395,7 +395,7 @@ Ok(
                                     },
                                     Node {
                                         ident: Ident(
-                                            "trailing_unary",
+                                            "trailing",
                                         ),
                                         kind: Modified(
                                             Node(
@@ -627,8 +627,11 @@ Ok(
                                         tag: None,
                                     },
                                 ],
-                                kind: One(
-                                    1,
+                                kind: Many(
+                                    [
+                                        0,
+                                        1,
+                                    ],
                                 ),
                                 inline: false,
                             },

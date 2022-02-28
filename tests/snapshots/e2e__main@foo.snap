@@ -1,6 +1,6 @@
 ---
 source: tests/e2e.rs
-assertion_line: 67
+assertion_line: 30
 expression: "std::str::from_utf8(&output.stdout).unwrap()"
 input_file: examples/foo
 
@@ -18,12 +18,15 @@ input_file: examples/foo
                 ),
                 value: Sum {
                     leading: Product {
-                        leading: NumLit(
-                            NumLit(
-                                5,
-                                None,
+                        leading: Unary {
+                            minus: 0,
+                            atom: NumLit(
+                                NumLit(
+                                    5,
+                                    None,
+                                ),
                             ),
-                        ),
+                        },
                         trailing: [],
                     },
                     trailing: [],
@@ -35,23 +38,29 @@ input_file: examples/foo
                 ),
                 value: Sum {
                     leading: Product {
-                        leading: NumLit(
-                            NumLit(
-                                3,
-                                None,
+                        leading: Unary {
+                            minus: 0,
+                            atom: NumLit(
+                                NumLit(
+                                    3,
+                                    None,
+                                ),
                             ),
-                        ),
+                        },
                         trailing: [],
                     },
                     trailing: [
                         TrailingProduct {
                             add_or_sub: Plus,
                             product: Product {
-                                leading: Ident(
-                                    Ident(
-                                        "five",
+                                leading: Unary {
+                                    minus: 0,
+                                    atom: Ident(
+                                        Ident(
+                                            "five",
+                                        ),
                                     ),
-                                ),
+                                },
                                 trailing: [],
                             },
                         },
@@ -61,37 +70,46 @@ input_file: examples/foo
         ],
         body: Sum {
             leading: Product {
-                leading: FnCall(
-                    FnCall {
-                        ident: Ident(
-                            "add",
-                        ),
-                        args: [
-                            Sum {
-                                leading: Product {
-                                    leading: Ident(
-                                        Ident(
-                                            "five",
-                                        ),
-                                    ),
+                leading: Unary {
+                    minus: 0,
+                    atom: FnCall(
+                        FnCall {
+                            ident: Ident(
+                                "add",
+                            ),
+                            args: [
+                                Sum {
+                                    leading: Product {
+                                        leading: Unary {
+                                            minus: 0,
+                                            atom: Ident(
+                                                Ident(
+                                                    "five",
+                                                ),
+                                            ),
+                                        },
+                                        trailing: [],
+                                    },
                                     trailing: [],
                                 },
-                                trailing: [],
-                            },
-                            Sum {
-                                leading: Product {
-                                    leading: Ident(
-                                        Ident(
-                                            "eight",
-                                        ),
-                                    ),
+                                Sum {
+                                    leading: Product {
+                                        leading: Unary {
+                                            minus: 0,
+                                            atom: Ident(
+                                                Ident(
+                                                    "eight",
+                                                ),
+                                            ),
+                                        },
+                                        trailing: [],
+                                    },
                                     trailing: [],
                                 },
-                                trailing: [],
-                            },
-                        ],
-                    },
-                ),
+                            ],
+                        },
+                    ),
+                },
                 trailing: [],
             },
             trailing: [],
@@ -112,22 +130,28 @@ input_file: examples/foo
         declaration: [],
         body: Sum {
             leading: Product {
-                leading: Ident(
-                    Ident(
-                        "x",
+                leading: Unary {
+                    minus: 0,
+                    atom: Ident(
+                        Ident(
+                            "x",
+                        ),
                     ),
-                ),
+                },
                 trailing: [],
             },
             trailing: [
                 TrailingProduct {
                     add_or_sub: Plus,
                     product: Product {
-                        leading: Ident(
-                            Ident(
-                                "y",
+                        leading: Unary {
+                            minus: 0,
+                            atom: Ident(
+                                Ident(
+                                    "y",
+                                ),
                             ),
-                        ),
+                        },
                         trailing: [],
                     },
                 },

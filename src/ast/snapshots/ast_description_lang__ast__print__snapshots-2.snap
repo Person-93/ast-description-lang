@@ -1,6 +1,6 @@
 ---
 source: src/ast/print.rs
-assertion_line: 919
+assertion_line: 769
 expression: printed
 input_file: examples/foo/example.ast
 
@@ -31,7 +31,7 @@ pub struct Sum {
 }
 #[derive(Clone, Debug)]
 pub struct Product {
-  pub leading: Atom,
+  pub leading: Unary,
   pub trailing: Vec<TrailingUnary>,
 }
 #[derive(Clone, Debug)]
@@ -47,12 +47,17 @@ pub enum AddOrSub {
 #[derive(Clone, Debug)]
 pub struct TrailingUnary {
   pub mult_or_div: MultOrDiv,
-  pub unary: Atom,
+  pub unary: Unary,
 }
 #[derive(Clone, Debug)]
 pub enum MultOrDiv {
   Mult,
   Div,
+}
+#[derive(Clone, Debug)]
+pub struct Unary {
+  pub minus: usize,
+  pub atom: Atom,
 }
 #[derive(Clone, Debug)]
 pub enum Atom {
@@ -123,7 +128,7 @@ pub mod parse {
       .map(|_| MultOrDiv::Mult)
       .or(div().map(|_| MultOrDiv::Div))
   }
-  pub fn unary() -> impl Parser<Token, Atom, Error = Error> {
+  pub fn unary() -> impl Parser<Token, Unary, Error = Error> {
     RECURSIVE.with(|parsers| parsers.borrow().6.clone())
   }
   pub fn atom() -> impl Parser<Token, Atom, Error = Error> {
@@ -137,7 +142,7 @@ pub mod parse {
     Recursive<'static, Token, Product, Error>,
     Recursive<'static, Token, TrailingProduct, Error>,
     Recursive<'static, Token, TrailingUnary, Error>,
-    Recursive<'static, Token, Atom, Error>,
+    Recursive<'static, Token, Unary, Error>,
     Recursive<'static, Token, Atom, Error>,
   );
   fn recursive_parsers() -> RecursiveParsers {
@@ -213,7 +218,14 @@ pub mod parse {
               unary: _1,
             })
         });
-        minus().repeated().then(atom.clone()).map(|(_0, _1)| _1)
+        minus()
+          .repeated()
+          .map(|items| items.len())
+          .then(atom.clone())
+          .map(|(_0, _1)| Unary {
+            minus: _0,
+            atom: _1,
+          })
       });
       num_lit()
         .map(Atom::NumLit)
