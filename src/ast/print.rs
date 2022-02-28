@@ -357,7 +357,7 @@ impl Ast<'_> {
         specs,
       ),
       NodeKind::Modified(inner, modifier) => {
-        modify_parser(inner, self.print_parser_body(inner, None, specs), *modifier)
+        self.print_modified_parser(inner, *modifier, specs, false)
       }
       NodeKind::Todo => print_todo(),
       NodeKind::End => quote! { end() },
@@ -384,12 +384,16 @@ impl Ast<'_> {
         NodeKind::Delimited(inner, delimiter) => {
           let parser = match &**inner {
             NodeKind::Node(child) => quote! { #child() },
-            NodeKind::Modified(inner, modifier) => modify_parser(inner, parser, *modifier),
+            NodeKind::Modified(inner, modifier) => {
+              self.print_modified_parser(inner, *modifier, specs, false)
+            }
             _ => parser,
           };
           self.delimit_parser(parser, *delimiter, specs)
         }
-        NodeKind::Modified(inner, modifier) => modify_parser(inner, parser, *modifier),
+        NodeKind::Modified(inner, modifier) => {
+          self.print_modified_parser(inner, *modifier, specs, false)
+        }
         NodeKind::Todo => print_todo(),
         NodeKind::End => parser,
       }
@@ -425,49 +429,48 @@ impl Ast<'_> {
       }
       GroupKind::One(idx) => {
         let binding = print_tuple_binding(members.len());
-
-        let members = members.iter().enumerate().map(|(current_idx, node)| {
-          let parser = self.print_sub_parser(node, specs, *inline);
-          if current_idx == 0 {
-            parser
-          } else {
-            quote! { .then(#parser) }
-          }
-        });
-
+        let members = self.print_group_members(members, specs, *inline);
         let idx = ident_from_idx(*idx);
-
-        quote! { #(#members)*.map(|#binding| #idx ) }
+        quote! { #members.map(|#binding| #idx ) }
       }
       GroupKind::Many(_) => {
         let ty = hint.unwrap().as_type().to_token_stream();
-
-        let member_init = members
-          .iter()
-          .enumerate()
-          .filter(|(_, member)| !self.is_node_kind_zero_sized(&member.kind))
-          .map(|(idx, member)| {
-            let ident = member.tag.unwrap_or(member.ident);
-            let idx = ident_from_idx(idx);
-            quote! { #ident: #idx }
-          });
-
+        let member_init = self.print_group_members_init(members);
         let binding = print_tuple_binding(members.len());
-
-        let members = members.iter().enumerate().map(|(current_idx, node)| {
-          let parser = self.print_sub_parser(node, specs, *inline);
-          if current_idx == 0 {
-            parser
-          } else {
-            quote! { .then(#parser) }
-          }
-        });
-
-        quote! {
-          #(#members)*.map(|#binding| #ty { #(#member_init),* })
-        }
+        let members = self.print_group_members(members, specs, *inline);
+        quote! { #members.map(|#binding| #ty { #member_init }) }
       }
     }
+  }
+
+  fn print_group_members_init(&self, members: &[Node<'_>]) -> TokenStream {
+    let members = members
+      .iter()
+      .enumerate()
+      .filter(|(_, member)| !self.is_node_kind_zero_sized(&member.kind))
+      .map(|(idx, member)| {
+        let ident = member.tag.unwrap_or(member.ident);
+        let idx = ident_from_idx(idx);
+        quote! { #ident: #idx }
+      });
+    quote! { #(#members),* }
+  }
+
+  fn print_group_members(
+    &self,
+    members: &[Node<'_>],
+    specs: &Specs<'_>,
+    inline: bool,
+  ) -> TokenStream {
+    let members = members.iter().enumerate().map(|(current_idx, node)| {
+      let parser = self.print_sub_parser(node, specs, inline);
+      if current_idx == 0 {
+        parser
+      } else {
+        quote! { .then(#parser) }
+      }
+    });
+    quote! { #(#members)* }
   }
 
   fn is_node_cyclic(&self, node: &Node<'_>) -> bool {
@@ -559,16 +562,17 @@ impl Ast<'_> {
     hint: Option<Ident<'_>>,
     specs: &Specs<'_>,
   ) -> TokenStream {
-    match node_kind {
-      NodeKind::Node(child) => {
-        let child = self.get(*child).unwrap();
-        if self.is_node_cyclic(child) {
-          let ident = child.ident;
-          quote! { #ident.clone() }
-        } else {
-          self.print_recursive_sub_parser(&child.kind, hint, specs)
-        }
+    let do_recursion = |node: &Node<'_>, hint: Option<Ident<'_>>| {
+      let ident = node.ident;
+      if self.is_node_cyclic(node) {
+        quote! { #ident.clone() }
+      } else {
+        self.print_recursive_sub_parser(&node.kind, Some(hint.unwrap_or(ident)), specs)
       }
+    };
+
+    match node_kind {
+      NodeKind::Node(child) => do_recursion(self.get(*child).unwrap(), hint),
       NodeKind::StaticToken(ident) | NodeKind::DynamicToken(ident) => quote! { #ident() },
       NodeKind::Group(Group {
         members,
@@ -599,30 +603,11 @@ impl Ast<'_> {
         }
         GroupKind::Many(_) => {
           let ty = self.print_as_type(node_kind, hint);
-
-          let member_init = members
-            .iter()
-            .enumerate()
-            .filter(|(_, node)| !self.is_node_kind_zero_sized(&node.kind))
-            .map(|(idx, node)| {
-              let ident = node.tag.unwrap_or(node.ident);
-              let idx = ident_from_idx(idx);
-              quote! { #ident: #idx }
-            });
-
-          let binding =
-            (1..members.len()).fold(ident_from_idx(0).to_token_stream(), |accum, idx| {
-              let ident = ident_from_idx(idx);
-              quote! { (#accum, #ident) }
-            });
+          let member_init = self.print_group_members_init(members);
+          let binding = print_tuple_binding(members.len());
 
           let members = members.iter().enumerate().map(|(current_idx, node)| {
-            let ident = node.ident;
-            let parser = if self.is_node_cyclic(node) {
-              quote! { #ident.clone() }
-            } else {
-              self.print_recursive_sub_parser(&node.kind, Some(ident), specs)
-            };
+            let parser = do_recursion(node, None);
             if current_idx == 0 {
               parser
             } else {
@@ -630,9 +615,7 @@ impl Ast<'_> {
             }
           });
 
-          quote! {
-            #(#members)*.map(|#binding| #ty { #(#member_init),* })
-          }
+          quote! { #(#members)*.map(|#binding| #ty { #member_init }) }
         }
       },
       NodeKind::Choice(Choice {
@@ -641,18 +624,10 @@ impl Ast<'_> {
       }) => {
         let ty = self.print_as_type(node_kind, hint);
         let choices = choices.iter().enumerate().map(|(idx, node)| {
-          let ident = node.ident;
-          let variant = ident.as_type();
-
-          let parser = if self.is_node_cyclic(node) {
-            quote! { #ident.clone() }
-          } else {
-            self.print_recursive_sub_parser(&node.kind, Some(ident), specs)
-          };
-
+          let variant = node.ident.as_type();
+          let parser = do_recursion(node, None);
           let func =
             self.print_func_for_choice_mapping(&node.kind, ty.clone(), variant.to_token_stream());
-
           let choice = quote! { #parser.map(#func) };
           if idx == 0 {
             choice
@@ -687,11 +662,9 @@ impl Ast<'_> {
         *delimiter,
         specs,
       ),
-      NodeKind::Modified(inner, modifier) => modify_parser(
-        &NodeKind::Todo, // dummy arg to prevent it from recursing
-        self.print_recursive_sub_parser(inner, hint, specs),
-        *modifier,
-      ),
+      NodeKind::Modified(inner, modifier) => {
+        self.print_modified_parser(inner, *modifier, specs, true)
+      }
       NodeKind::Todo => print_todo(),
       NodeKind::End => quote! { end() },
     }
@@ -721,8 +694,48 @@ impl Ast<'_> {
       NodeKind::Choice(_) => quote! { #ty::#variant },
       NodeKind::Delimited(_, _) => quote! { #ty::#variant },
       NodeKind::Modified(_, _) => quote! { #ty::#variant },
-      NodeKind::Todo => quote! { #ty::#variant },
+      NodeKind::Todo => quote! { |_| #ty::#variant },
       NodeKind::End => quote! { |_| #ty::#variant },
+    }
+  }
+
+  fn print_modified_parser(
+    &self,
+    inner: &NodeKind<'_>,
+    modifier: Modifier,
+    specs: &Specs<'_>,
+    recursive: bool,
+  ) -> TokenStream {
+    if self.is_node_kind_zero_sized(inner) {
+      let inner = self.print_parser_body(inner, None, specs);
+
+      match modifier {
+        Modifier::Repeat => quote! { #inner.repeated().map(|items| items.len()) },
+        Modifier::Csv => quote! { #inner.separated_by(comma()).map(|items| items.len()) },
+        Modifier::OnePlus => quote! { #inner.repeated().at_least(1).map(|items| items.len()) },
+        Modifier::CsvOnePlus => {
+          quote! { #inner.separated_by(comma()).at_least(1).map(|items| items.len()) }
+        }
+        Modifier::Optional => quote! { #inner.or_not().map(|opt| opt.is_some()) },
+        Modifier::Boxed => unreachable!("empty box"),
+      }
+    } else {
+      let inner = if recursive {
+        self.print_recursive_sub_parser(inner, None, specs)
+      } else {
+        self.print_parser_body(inner, None, specs)
+      };
+
+      match modifier {
+        Modifier::Repeat => quote! { #inner.repeated() },
+        Modifier::Csv => quote! { #inner.separated_by(comma()) },
+        Modifier::OnePlus => quote! { #inner.repeated().at_least(1) },
+        Modifier::CsvOnePlus => {
+          quote! { #inner.separated_by(comma()).at_least(1) }
+        }
+        Modifier::Optional => quote! { #inner.or_not() },
+        Modifier::Boxed => quote! { #inner.map(Box::new) },
+      }
     }
   }
 
@@ -734,7 +747,7 @@ impl Ast<'_> {
       NodeKind::DynamicToken(_) => false,
       NodeKind::Group(Group { kind, .. }) => matches!(kind, GroupKind::Zero),
       NodeKind::Choice(_) => false,
-      NodeKind::Delimited(_, _) => false,
+      NodeKind::Delimited(inner, _) => self.is_node_kind_zero_sized(inner),
       NodeKind::Modified(_, _) => false,
       NodeKind::Todo => true,
       NodeKind::End => true,
@@ -750,24 +763,6 @@ impl ToTokens for Ident<'_> {
       format_ident!("{}", self.0)
     };
     tokens.extend(quote! { #ident })
-  }
-}
-
-fn modify_parser(inner: &NodeKind<'_>, parser: TokenStream, modifier: Modifier) -> TokenStream {
-  let parser = if let NodeKind::Modified(inner, modifier) = inner {
-    modify_parser(inner, parser, *modifier)
-  } else {
-    parser
-  };
-  match modifier {
-    Modifier::Repeat => quote! { #parser.repeated() },
-    Modifier::Csv => quote! { #parser.separated_by(comma()) },
-    Modifier::OnePlus => quote! { #parser.repeated().at_least(1) },
-    Modifier::CsvOnePlus => {
-      quote! { #parser.separated_by(comma()).at_least(1) }
-    }
-    Modifier::Optional => quote! { #parser.or_not() },
-    Modifier::Boxed => quote! { #parser.map(Box::new) },
   }
 }
 
