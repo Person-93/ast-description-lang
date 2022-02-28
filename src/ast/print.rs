@@ -219,7 +219,7 @@ impl Ast<'_> {
     };
     let body = if self.is_node_cyclic(node) {
       let idx = self.index_of(node.ident).unwrap();
-      let idx = self.cyclic[0..=idx].iter().filter(|b| **b).count() - 1;
+      let idx = self.cyclic.binary_search(&idx).unwrap();
       let idx = proc_macro2::Literal::usize_unsuffixed(idx);
       quote! { RECURSIVE.with(|parsers| parsers.borrow().#idx.clone()) }
     } else {
@@ -398,7 +398,7 @@ impl Ast<'_> {
     match node.kind {
       NodeKind::Node(_) | NodeKind::Group(_) | NodeKind::Choice(_) => {
         let idx = self.nodes.index_of(node.name()).unwrap();
-        self.cyclic[idx]
+        self.cyclic.binary_search(&idx).is_ok()
       }
       NodeKind::StaticToken(_)
       | NodeKind::DynamicToken(_)
@@ -431,10 +431,9 @@ impl Ast<'_> {
 
   fn print_recursive_parsers(&self, specs: &Specs<'_>) -> TokenStream {
     let nodes: Vec<_> = self
-      .nodes
+      .cyclic
       .iter()
-      .zip(self.cyclic.iter())
-      .filter_map(|(node, recursive)| recursive.then(|| node))
+      .map(|idx| self.nodes.get_index(*idx).unwrap())
       .collect();
 
     let idents = nodes.iter().map(|node| node.ident.to_token_stream());

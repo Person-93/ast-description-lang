@@ -13,7 +13,7 @@ mod transform;
 #[derive(Debug, Clone)]
 pub(super) struct Ast<'a> {
   pub nodes: NamedSet<'a, Node<'a>>,
-  pub cyclic: Vec<bool>,
+  pub cyclic: Vec<usize>,
 }
 
 #[derive(Debug, Clone)]

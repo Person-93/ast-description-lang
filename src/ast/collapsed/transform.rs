@@ -41,8 +41,7 @@ impl<'a> ParsedAst<'a> {
         .cyclic
         .iter()
         .copied()
-        .enumerate()
-        .filter_map(|(idx, cycle)| cycle.then(|| ast.nodes[idx].ident.to_string()))
+        .map(|idx| ast.nodes[idx].ident.to_string())
         .collect::<Vec<_>>()
         .join(", ")
     );
@@ -250,7 +249,8 @@ impl<'n> Nodes<'n> {
     let cyclic = self
       .0
       .iter()
-      .map(|node| self.is_node_cyclic(node))
+      .enumerate()
+      .filter_map(|(idx, node)| self.is_node_cyclic(node).then(|| idx))
       .collect::<Vec<_>>();
     Ast {
       nodes: self.0,

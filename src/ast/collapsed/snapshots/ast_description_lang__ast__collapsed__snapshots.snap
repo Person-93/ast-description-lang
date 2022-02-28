@@ -1,6 +1,6 @@
 ---
 source: src/ast/collapsed/mod.rs
-assertion_line: 212
+assertion_line: 225
 expression: "Ast::parse(&text).unwrap().transform(&specs).unwrap().transform()"
 input_file: examples/json/example.ast
 
@@ -261,12 +261,10 @@ Ok(
             },
         ),
         cyclic: [
-            false,
-            true,
-            true,
-            true,
-            true,
-            false,
+            1,
+            2,
+            3,
+            4,
         ],
     },
 )
