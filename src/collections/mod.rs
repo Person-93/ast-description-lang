@@ -37,6 +37,10 @@ impl<'ni, T: NamedItem<'ni>> NamedSet<'ni, T> {
       .map(|wrapper| &wrapper.0)
   }
 
+  pub fn get_index(&self, index: usize) -> Option<&T> {
+    self.0.get_index(index).map(|wrapper| &wrapper.0)
+  }
+
   pub fn index_of(&self, name: T::Name) -> Option<usize> {
     self.0.get_index_of(&Wrapper::new(T::dummy(name)))
   }
