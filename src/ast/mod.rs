@@ -19,6 +19,14 @@ pub fn generate_ast_mod(text: &str, specs: &Specs<'_>, config: &Config<'_>) -> R
   let tokens_mod = TokenStream::from_str(config.tokens_mod)
     .map_err(|err| anyhow!("{err}"))
     .context("failed to lex the tokens mod path")?;
+  let span = match config.span {
+    Some(span) => Some(
+      TokenStream::from_str(span)
+        .map_err(|err| anyhow!("{err}"))
+        .context("failed to lex the span type")?,
+    ),
+    None => None,
+  };
   let ast = raw::Ast::parse(text).context("failed to lex AST description")?;
   let ast = ast
     .transform(specs)
@@ -26,7 +34,7 @@ pub fn generate_ast_mod(text: &str, specs: &Specs<'_>, config: &Config<'_>) -> R
   let ast = ast
     .transform()
     .context("failed to collapse AST description")?;
-  let ast = ast.print(specs, error, tokens_mod);
+  let ast = ast.print(specs, error, tokens_mod, span);
   Ok(ast)
 }
 
@@ -34,6 +42,7 @@ pub fn generate_ast_mod(text: &str, specs: &Specs<'_>, config: &Config<'_>) -> R
 pub struct Config<'c> {
   pub error: &'c str,
   pub tokens_mod: &'c str,
+  pub span: Option<&'c str>,
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
@@ -61,6 +70,7 @@ impl Default for Config<'_> {
     Self {
       error: "::chumsky::error::Simple<Token>",
       tokens_mod: "crate::tokens",
+      span: None,
     }
   }
 }

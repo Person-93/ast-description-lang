@@ -13,7 +13,11 @@ impl Ast<'_> {
     specs: &Specs<'_>,
     error: TokenStream,
     tokens_mod: TokenStream,
+    span: Option<TokenStream>,
   ) -> TokenStream {
+    let span = span.map(|span| quote! { type Span = #span; });
+    let member_span = span.as_ref().map(|_| quote! { pub span: Span });
+
     let nodes = self.iter().filter_map(|node| match &node.kind {
       NodeKind::Node(_)
       | NodeKind::StaticToken(_)
@@ -47,7 +51,7 @@ impl Ast<'_> {
             let ident = node.ident.as_type();
             Some(quote! {
               #[derive(Clone, Debug)]
-              pub struct #ident { #(#members),* }
+              pub struct #ident { #(#members),*, #member_span }
             })
           }
         }
@@ -92,13 +96,13 @@ impl Ast<'_> {
               .map(|node| {
                 let ident = node.tag.unwrap_or(node.ident);
                 let ty = self.print_as_type(&node.kind, Some(node.ident));
-                quote! { #ident: #ty }
+                quote! { pub #ident: #ty }
               });
 
             let ident = node.ident.as_type();
             Some(quote! {
               #[derive(Clone, Debug)]
-              pub struct #ident { #(#members),* }
+              pub struct #ident { #(#members),*, #member_span }
             })
           }
         },
@@ -114,15 +118,20 @@ impl Ast<'_> {
       NodeKind::End => None,
     });
 
-    let parsers = self.nodes.iter().map(|node| self.print_parser(node, specs));
+    let parsers = self
+      .nodes
+      .iter()
+      .map(|node| self.print_parser(node, specs, span.is_some()));
 
-    let recursive_parsers = self.print_recursive_parsers(specs);
+    let recursive_parsers = self.print_recursive_parsers(specs, span.is_some());
 
     quote! {
       #![allow(dead_code)]
 
       use #tokens_mod::*;
       #(#nodes)*
+
+      #span
 
       pub mod parse {
         use super::*;
@@ -210,7 +219,7 @@ impl Ast<'_> {
     }
   }
 
-  fn print_parser(&self, node: &Node<'_>, specs: &Specs<'_>) -> TokenStream {
+  fn print_parser(&self, node: &Node<'_>, specs: &Specs<'_>, include_span: bool) -> TokenStream {
     let ident = node.ident;
     let ty = if self.is_node_kind_zero_sized(&node.kind) {
       quote! { () }
@@ -223,7 +232,7 @@ impl Ast<'_> {
       let idx = proc_macro2::Literal::usize_unsuffixed(idx);
       quote! { RECURSIVE.with(|parsers| parsers.borrow().#idx.clone()) }
     } else {
-      self.print_parser_body(&node.kind, Some(node.ident), specs)
+      self.print_parser_body(&node.kind, Some(node.ident), specs, include_span)
     };
 
     quote! {
@@ -236,17 +245,18 @@ impl Ast<'_> {
     node_kind: &NodeKind<'_>,
     hint: Option<Ident<'_>>,
     specs: &Specs<'_>,
+    include_span: bool,
   ) -> TokenStream {
     match node_kind {
       NodeKind::Node(child) => quote! { #child() },
       NodeKind::StaticToken(ident) | NodeKind::DynamicToken(ident) => quote! { #ident() },
-      NodeKind::Group(group) => self.print_group_parser(group, hint, specs),
+      NodeKind::Group(group) => self.print_group_parser(group, hint, specs, include_span),
       NodeKind::SubGroup(members) => {
         let mut members = members.iter();
-        let first = self.print_sub_parser(members.next().unwrap(), specs, false);
+        let first = self.print_sub_parser(members.next().unwrap(), specs, false, include_span);
         let members: Vec<_> = members
           .map(|node| {
-            let parser = self.print_sub_parser(node, specs, false);
+            let parser = self.print_sub_parser(node, specs, false, include_span);
             quote! { .then(#parser) }
           })
           .collect();
@@ -266,7 +276,7 @@ impl Ast<'_> {
           let ident = choice.ident;
           let variant = ident.as_type();
 
-          let parser = self.print_sub_parser(choice, specs, false);
+          let parser = self.print_sub_parser(choice, specs, false, include_span);
 
           let func =
             self.print_func_for_choice_mapping(&choice.kind, ty.clone(), variant.to_token_stream());
@@ -284,25 +294,31 @@ impl Ast<'_> {
         kind: ChoiceKind::Option { primary, secondary },
         inline: _,
       }) => {
-        let primary = self.print_sub_parser(primary, specs, false);
+        let primary = self.print_sub_parser(primary, specs, false, include_span);
         quote! { #primary.map(Some).or(#secondary().map(|_| None)) }
       }
       NodeKind::Delimited(inner, delimiter) => self.delimit_parser(
-        self.print_parser_body(inner, hint, specs),
+        self.print_parser_body(inner, hint, specs, include_span),
         *delimiter,
         specs,
       ),
       NodeKind::Modified(inner, modifier) => {
-        self.print_modified_parser(inner, *modifier, specs, false)
+        self.print_modified_parser(inner, *modifier, specs, false, include_span)
       }
       NodeKind::Todo => print_todo(),
       NodeKind::End => quote! { end() },
     }
   }
 
-  fn print_sub_parser(&self, node: &Node<'_>, specs: &Specs<'_>, inline: bool) -> TokenStream {
+  fn print_sub_parser(
+    &self,
+    node: &Node<'_>,
+    specs: &Specs<'_>,
+    inline: bool,
+    include_span: bool,
+  ) -> TokenStream {
     if inline {
-      self.print_parser_body(&node.kind, None, specs)
+      self.print_parser_body(&node.kind, None, specs, include_span)
     } else {
       let ident = node.ident;
       let parser = quote! { #ident() };
@@ -310,26 +326,26 @@ impl Ast<'_> {
         NodeKind::Node(child) => quote! { #child() },
         NodeKind::StaticToken(_) | NodeKind::DynamicToken(_) => parser,
         NodeKind::Group(group @ Group { inline: true, .. }) => {
-          self.print_group_parser(group, None, specs)
+          self.print_group_parser(group, None, specs, include_span)
         }
         NodeKind::Group(Group { inline: false, .. }) => parser,
-        NodeKind::SubGroup(_) => self.print_parser_body(&node.kind, None, specs),
+        NodeKind::SubGroup(_) => self.print_parser_body(&node.kind, None, specs, include_span),
         NodeKind::Choice(Choice { inline: true, .. }) => {
-          self.print_parser_body(&node.kind, None, specs)
+          self.print_parser_body(&node.kind, None, specs, include_span)
         }
         NodeKind::Choice(Choice { inline: false, .. }) => parser,
         NodeKind::Delimited(inner, delimiter) => {
           let parser = match &**inner {
             NodeKind::Node(child) => quote! { #child() },
             NodeKind::Modified(inner, modifier) => {
-              self.print_modified_parser(inner, *modifier, specs, false)
+              self.print_modified_parser(inner, *modifier, specs, false, include_span)
             }
             _ => parser,
           };
           self.delimit_parser(parser, *delimiter, specs)
         }
         NodeKind::Modified(inner, modifier) => {
-          self.print_modified_parser(inner, *modifier, specs, false)
+          self.print_modified_parser(inner, *modifier, specs, false, include_span)
         }
         NodeKind::Todo => print_todo(),
         NodeKind::End => parser,
@@ -346,25 +362,36 @@ impl Ast<'_> {
     }: &Group<'_>,
     hint: Option<Ident<'_>>,
     specs: &Specs<'_>,
+    include_span: bool,
   ) -> TokenStream {
     match kind {
       GroupKind::One(idx) => {
         let binding = print_tuple_binding(members.len());
-        let members = self.print_group_members(members, specs, *inline);
+        let members = self.print_group_members(members, specs, *inline, include_span);
         let idx = ident_from_idx(*idx);
         quote! { #members.map(|#binding| #idx ) }
       }
       GroupKind::Many(_) => {
         let ty = hint.unwrap().as_type().to_token_stream();
-        let member_init = self.print_group_members_init(members);
+        let member_init = self.print_group_members_init(members, include_span);
         let binding = print_tuple_binding(members.len());
-        let members = self.print_group_members(members, specs, *inline);
-        quote! { #members.map(|#binding| #ty { #member_init }) }
+        let binding = if include_span {
+          quote! { #binding, span }
+        } else {
+          binding
+        };
+        let members = self.print_group_members(members, specs, *inline, include_span);
+        let map_fn = if include_span {
+          quote! { map_with_span }
+        } else {
+          quote! { map }
+        };
+        quote! { #members.#map_fn(|#binding| #ty { #member_init }) }
       }
     }
   }
 
-  fn print_group_members_init(&self, members: &[Node<'_>]) -> TokenStream {
+  fn print_group_members_init(&self, members: &[Node<'_>], include_span: bool) -> TokenStream {
     let members = members
       .iter()
       .enumerate()
@@ -374,7 +401,8 @@ impl Ast<'_> {
         let idx = ident_from_idx(idx);
         quote! { #ident: #idx }
       });
-    quote! { #(#members),* }
+    let span = include_span.then(|| quote! { span });
+    quote! { #(#members),*, #span }
   }
 
   fn print_group_members(
@@ -382,9 +410,10 @@ impl Ast<'_> {
     members: &[Node<'_>],
     specs: &Specs<'_>,
     inline: bool,
+    include_span: bool,
   ) -> TokenStream {
     let members = members.iter().enumerate().map(|(current_idx, node)| {
-      let parser = self.print_sub_parser(node, specs, inline);
+      let parser = self.print_sub_parser(node, specs, inline, include_span);
       if current_idx == 0 {
         parser
       } else {
@@ -429,7 +458,7 @@ impl Ast<'_> {
     }
   }
 
-  fn print_recursive_parsers(&self, specs: &Specs<'_>) -> TokenStream {
+  fn print_recursive_parsers(&self, specs: &Specs<'_>, include_span: bool) -> TokenStream {
     let nodes: Vec<_> = self
       .cyclic
       .iter()
@@ -454,7 +483,8 @@ impl Ast<'_> {
 
     let body = nodes.iter().fold(TokenStream::new(), |accum, node| {
       let ident = node.ident;
-      let parser = self.print_recursive_sub_parser(&node.kind, Some(node.ident), specs);
+      let parser =
+        self.print_recursive_sub_parser(&node.kind, Some(node.ident), specs, include_span);
       quote! {
         #ident = recursive(|#[allow(unused_variables)] #ident| {
           #accum
@@ -482,13 +512,19 @@ impl Ast<'_> {
     node_kind: &NodeKind<'_>,
     hint: Option<Ident<'_>>,
     specs: &Specs<'_>,
+    include_span: bool,
   ) -> TokenStream {
     let do_recursion = |node: &Node<'_>, hint: Option<Ident<'_>>| {
       let ident = node.ident;
       if self.is_node_cyclic(node) {
         quote! { #ident.clone() }
       } else {
-        self.print_recursive_sub_parser(&node.kind, Some(hint.unwrap_or(ident)), specs)
+        self.print_recursive_sub_parser(
+          &node.kind,
+          Some(hint.unwrap_or(ident)),
+          specs,
+          include_span,
+        )
       }
     };
 
@@ -508,7 +544,7 @@ impl Ast<'_> {
               let ident = node.ident;
               quote! { #ident.clone() }
             } else {
-              self.print_recursive_sub_parser(&node.kind, Some(node.ident), specs)
+              self.print_recursive_sub_parser(&node.kind, Some(node.ident), specs, include_span)
             };
             if current_idx == 0 {
               parser
@@ -523,8 +559,18 @@ impl Ast<'_> {
         }
         GroupKind::Many(_) => {
           let ty = self.print_as_type(node_kind, hint);
-          let member_init = self.print_group_members_init(members);
+          let member_init = self.print_group_members_init(members, include_span);
           let binding = print_tuple_binding(members.len());
+          let map_fn = if include_span {
+            quote! { map_with_span }
+          } else {
+            quote! { map }
+          };
+          let binding = if include_span {
+            quote! { #binding, span }
+          } else {
+            binding
+          };
 
           let members = members.iter().enumerate().map(|(current_idx, node)| {
             let parser = do_recursion(node, None);
@@ -535,10 +581,10 @@ impl Ast<'_> {
             }
           });
 
-          quote! { #(#members)*.map(|#binding| #ty { #member_init }) }
+          quote! { #(#members)*.#map_fn(|#binding| #ty { #member_init }) }
         }
       },
-      NodeKind::SubGroup(_) => self.print_parser_body(node_kind, None, specs),
+      NodeKind::SubGroup(_) => self.print_parser_body(node_kind, None, specs, include_span),
       NodeKind::Choice(Choice {
         kind: ChoiceKind::Regular(choices),
         inline: _,
@@ -567,9 +613,12 @@ impl Ast<'_> {
           quote! { #ident.clone() }
         } else {
           match &primary.kind {
-            NodeKind::Group(_) => {
-              self.print_recursive_sub_parser(&primary.kind, Some(primary.ident), specs)
-            }
+            NodeKind::Group(_) => self.print_recursive_sub_parser(
+              &primary.kind,
+              Some(primary.ident),
+              specs,
+              include_span,
+            ),
             _ => {
               let ident = primary.ident;
               quote! { #ident() }
@@ -579,12 +628,12 @@ impl Ast<'_> {
         quote! { #primary.map(Some).or(#secondary().map(|_| None)) }
       }
       NodeKind::Delimited(inner, delimiter) => self.delimit_parser(
-        self.print_recursive_sub_parser(inner, hint, specs),
+        self.print_recursive_sub_parser(inner, hint, specs, include_span),
         *delimiter,
         specs,
       ),
       NodeKind::Modified(inner, modifier) => {
-        self.print_modified_parser(inner, *modifier, specs, true)
+        self.print_modified_parser(inner, *modifier, specs, true, include_span)
       }
       NodeKind::Todo => print_todo(),
       NodeKind::End => quote! { end() },
@@ -626,9 +675,10 @@ impl Ast<'_> {
     modifier: Modifier,
     specs: &Specs<'_>,
     recursive: bool,
+    include_span: bool,
   ) -> TokenStream {
     if self.is_node_kind_zero_sized(inner) {
-      let inner = self.print_parser_body(inner, None, specs);
+      let inner = self.print_parser_body(inner, None, specs, include_span);
 
       match modifier {
         Modifier::Repeat => quote! { #inner.repeated().map(|items| items.len()) },
@@ -642,9 +692,9 @@ impl Ast<'_> {
       }
     } else {
       let inner = if recursive {
-        self.print_recursive_sub_parser(inner, None, specs)
+        self.print_recursive_sub_parser(inner, None, specs, include_span)
       } else {
-        self.print_parser_body(inner, None, specs)
+        self.print_parser_body(inner, None, specs, include_span)
       };
 
       match modifier {
@@ -742,6 +792,7 @@ fn snapshots() {
         &specs,
         TokenStream::from_str(config.error).unwrap(),
         TokenStream::from_str(config.tokens_mod).unwrap(),
+        None,
       )
       .to_string();
     let rustfmt = Command::new("rustfmt")
