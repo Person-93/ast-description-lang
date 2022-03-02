@@ -532,7 +532,7 @@ impl Ast<'_> {
     };
 
     match node_kind {
-      NodeKind::Node(child) => do_recursion(self.get(*child).unwrap(), hint),
+      NodeKind::Node(child) => do_recursion(self.get(*child).unwrap(), None),
       NodeKind::StaticToken(ident) | NodeKind::DynamicToken(ident) => quote! { #ident() },
       NodeKind::Group(Group {
         members,
