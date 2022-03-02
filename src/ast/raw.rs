@@ -242,6 +242,13 @@ impl NodeDef<'_> {
 
 fn parse_tag<'p>(lexer: &Lexer<'p>) -> Result<Option<Ident<'p>>, Error> {
   if lexer.parse_literal(":") {
+    if !matches!(lexer.peek(), Some(c) if IDENT_CHARS.contains(c)) {
+      return Err(Error {
+        text: String::from(lexer.text()),
+        index: Some(lexer.index()),
+        kind: ErrorKind::ExpectedTag,
+      });
+    }
     let ident = Ident::parse(lexer).map(Some)?;
     if Modifier::parse(lexer).is_some() {
       Err(Error::new(lexer, ErrorKind::TagNotAllowed))
@@ -395,6 +402,7 @@ enum ErrorKind {
   MissingNodeDef,
   Duplicate,
   TagNotAllowed,
+  ExpectedTag,
 }
 
 impl Error {
@@ -436,6 +444,7 @@ impl Display for ErrorKind {
       ErrorKind::MissingNodeDef => write!(f, "expected node definition"),
       ErrorKind::Duplicate => write!(f, "duplicate key"),
       ErrorKind::TagNotAllowed => write!(f, "tags should be after modifiers"),
+      ErrorKind::ExpectedTag => write!(f, "':' must be immediately followed by a tag"),
     }
   }
 }
