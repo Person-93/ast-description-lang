@@ -41,6 +41,7 @@ impl<'l> Lexer<'l> {
 
   #[must_use]
   pub fn parse_literal(&self, value: &str) -> bool {
+    let old_idx = self.index.get();
     for i in 0..value.len() {
       if self
         .peek()
@@ -48,6 +49,7 @@ impl<'l> Lexer<'l> {
       {
         self.increment();
       } else {
+        self.index.set(old_idx);
         return false;
       }
     }
