@@ -62,7 +62,11 @@ impl Ast<'_> {
         inline: _,
       }) => {
         let variants = choices.iter().map(|choice| {
-          let name = choice.ident.to_string().to_pascal_case();
+          let name = choice
+            .tag
+            .unwrap_or(choice.ident)
+            .to_string()
+            .to_pascal_case();
           let name = Ident(&name);
           let body = if self.is_node_kind_zero_sized(&choice.kind) {
             quote! {}
@@ -273,8 +277,7 @@ impl Ast<'_> {
       }) => {
         let ty = self.print_as_type(node_kind, hint);
         let choices = choices.iter().enumerate().map(|(idx, choice)| {
-          let ident = choice.ident;
-          let variant = ident.as_type();
+          let variant = choice.tag.unwrap_or(choice.ident).as_type();
 
           let parser = self.print_sub_parser(choice, specs, false, include_span);
 
@@ -591,7 +594,7 @@ impl Ast<'_> {
       }) => {
         let ty = self.print_as_type(node_kind, hint);
         let choices = choices.iter().enumerate().map(|(idx, node)| {
-          let variant = node.ident.as_type();
+          let variant = node.tag.unwrap_or(node.ident).as_type();
           let parser = do_recursion(node, None);
           let func =
             self.print_func_for_choice_mapping(&node.kind, ty.clone(), variant.to_token_stream());
