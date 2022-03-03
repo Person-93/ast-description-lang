@@ -4,6 +4,18 @@ use std::fmt::{self, Display, Formatter};
 
 mod generated;
 
+fn make_num_lit(lexer: &mut Lexer<Token>) -> NumLit {
+  let mut iter = lexer.slice().split('.');
+  NumLit(
+    iter.next().unwrap().parse().unwrap(),
+    iter.next().map(|text| text.parse().unwrap()),
+  )
+}
+
+fn make_str_lit(lexer: &mut Lexer<Token>) -> StrLit {
+  StrLit(String::from(lexer.slice()))
+}
+
 // the float in the number literal is split into two parts
 // the part before the decimal and the part after it
 // this is because all tokens must be hashable, but floats
@@ -14,16 +26,6 @@ pub struct NumLit(i128, Option<u128>);
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub struct StrLit(String);
 
-impl NumLit {
-  fn new(lexer: &mut Lexer<Token>) -> Self {
-    let mut iter = lexer.slice().split('.');
-    Self(
-      iter.next().unwrap().parse().unwrap(),
-      iter.next().map(|s| s.parse().unwrap()),
-    )
-  }
-}
-
 impl Display for NumLit {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     write!(f, "{}", self.0)?;
@@ -31,12 +33,6 @@ impl Display for NumLit {
       write!(f, ".{dec}")?;
     }
     Ok(())
-  }
-}
-
-impl StrLit {
-  fn new(lexer: &mut Lexer<Token>) -> Self {
-    Self(String::from(lexer.slice()))
   }
 }
 

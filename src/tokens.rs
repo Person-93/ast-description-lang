@@ -1,7 +1,7 @@
 use crate::{Config, Specs};
 use anyhow::{anyhow, Result};
 use proc_macro2::TokenStream;
-use quote::quote;
+use quote::{format_ident, quote};
 use std::str::FromStr;
 
 impl Specs<'_> {
@@ -24,8 +24,9 @@ impl Specs<'_> {
     let dynamic_tokens = self.dynamic_tokens.iter().map(|token| {
       let name = token.0.as_type();
       let pattern = token.1;
+      let constructor = format_ident!("make_{}", token.0 .0);
       quote! {
-        #[regex(#pattern, super::#name::new)]
+        #[regex(#pattern, super::#constructor)]
         #name(super::#name)
       }
     });
